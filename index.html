@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weightlifting App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .screen-manager {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+        }
+        
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        .weight-screen {
+            padding: 0;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        @media (min-width: 768px) {
+            .main-content {
+                flex-direction: row;
+            }
+        }
+        
+        .barbell-layout {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #ddd;
+            min-height: 50vh;
+        }
+        
+        @media (min-width: 768px) {
+            .barbell-layout {
+                border-right: 1px solid #ddd;
+                border-bottom: none;
+            }
+        }
+        
+        .plate-layout {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: #eee;
+            overflow-y: auto;
+            max-height: 40vh;
+        }
+        
+        @media (min-width: 768px) {
+            .plate-layout {
+                flex: 0 0 30%;
+                max-height: none;
+            }
+        }
+        
+        .total-weight {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .barbell-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .barbell {
+            display: flex;
+            width: 100%;
+            max-width: 300px;
+            height: 100px;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            border-radius: 5px;
+            padding: 0 20px;
+        }
+        
+        .plate-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            height: 100%;
+            justify-content: center;
+        }
+        
+        .plate {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            min-width: 40px;
+            font-size: 0.8rem;
+        }
+        
+        .sets-label {
+            padding: 10px;
+            text-align: center;
+            font-size: 1rem;
+            white-space: pre-line;
+            border-top: 1px solid #ddd;
+            max-height: 20vh;
+            overflow-y: auto;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            margin: 5px 0;
+            text-align: center;
+            text-decoration: none;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .button-row button {
+            flex: 1;
+        }
+        
+        .sets-screen {
+            padding: 10px;
+        }
+        
+        .sets-display {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            white-space: pre-line;
+            font-size: 1rem;
+        }
+        
+        .plate-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        @media (min-width: 480px) {
+            .plate-buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-manager">
+        <!-- Weight Screen -->
+        <div class="screen weight-screen active" id="weight-screen">
+            <div class="main-content">
+                <div class="barbell-layout">
+                    <div class="total-weight" id="total-weight-label">Total: 20 kg</div>
+                    <div class="barbell-area">
+                        <div class="barbell" id="barbell">
+                            <div class="plate-side" id="left-plates"></div>
+                            <div class="plate-side" id="right-plates"></div>
+                        </div>
+                    </div>
+                    <div class="sets-label" id="sets-label">Sets: None</div>
+                </div>
+                <div class="plate-layout">
+                    <div class="button-row">
+                        <button id="set-button">Set</button>
+                        <button id="reset-button">Reset</button>
+                    </div>
+                    <div class="button-row">
+                        <button id="reset-weight-button">Reset Weight</button>
+                        <button id="set-starter-button">Start Set</button>
+                    </div>
+                    <div class="plate-buttons">
+                        <button class="plate-button" data-weight="5">5 kg</button>
+                        <button class="plate-button" data-weight="10">10 kg</button>
+                        <button class="plate-button" data-weight="15">15 kg</button>
+                        <button class="plate-button" data-weight="20">20 kg</button>
+                        <button class="plate-button" data-weight="25">25 kg</button>
+                        <button class="plate-button" data-weight="50">50 kg</button>
+                        <button class="plate-button" data-weight="100">100 kg</button>
+                        <button class="plate-button" data-weight="200">200 kg</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sets Screen -->
+        <div class="screen sets-screen" id="sets-screen">
+            <div class="sets-display" id="sets-display">No sets completed yet</div>
+            <button id="go-back-button">Go Back to Weights</button>
+        </div>
+    </div>
+
+    <script>
+        // App state
+        const state = {
+            totalWeight: 20, // Including barbell weight
+            sets: [],
+            currentSet: { weight: 0, reps: 0 }
+        };
+
+        // DOM elements
+        const weightScreen = document.getElementById('weight-screen');
+        const setsScreen = document.getElementById('sets-screen');
+        const totalWeightLabel = document.getElementById('total-weight-label');
+        const setsLabel = document.getElementById('sets-label');
+        const leftPlates = document.getElementById('left-plates');
+        const rightPlates = document.getElementById('right-plates');
+        const setStarterButton = document.getElementById('set-starter-button');
+        const setButton = document.getElementById('set-button');
+        const resetButton = document.getElementById('reset-button');
+        const resetWeightButton = document.getElementById('reset-weight-button');
+        const plateButtons = document.querySelectorAll('.plate-button');
+        const setsDisplay = document.getElementById('sets-display');
+        const goBackButton = document.getElementById('go-back-button');
+
+        // Switch screens
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Add plates to barbell
+        function addPlate(weight) {
+            // Add to left side
+            const leftPlate = document.createElement('div');
+            leftPlate.className = 'plate';
+            leftPlate.textContent = `${weight} kg`;
+            leftPlates.appendChild(leftPlate);
+            
+            // Add to right side
+            const rightPlate = document.createElement('div');
+            rightPlate.className = 'plate';
+            rightPlate.textContent = `${weight} kg`;
+            rightPlates.appendChild(rightPlate);
+            
+            // Update total weight (2 plates added)
+            state.totalWeight += weight * 2;
+            updateTotalWeight();
+        }
+
+        // Update total weight display
+        function updateTotalWeight() {
+            totalWeightLabel.textContent = `Total: ${state.totalWeight} kg`;
+        }
+
+        // Reset the app
+        function resetApp() {
+            leftPlates.innerHTML = '';
+            rightPlates.innerHTML = '';
+            state.totalWeight = 20; // Reset to barbell weight
+            state.sets = [];
+            updateTotalWeight();
+            updateSetsLabel();
+        }
+
+        // Reset only weights
+        function resetWeight() {
+            leftPlates.innerHTML = '';
+            rightPlates.innerHTML = '';
+            state.totalWeight = 20; // Reset to barbell weight
+            updateTotalWeight();
+        }
+
+        // Start a new set
+        function startSet() {
+            if (state.totalWeight > 20) { // More than just barbell
+                // Prompt for reps
+                const reps = prompt("Enter number of reps:", "5");
+                if (reps !== null) {
+                    state.sets.push({ 
+                        weight: state.totalWeight - 20, // Store without barbell weight
+                        reps: parseInt(reps) || 0 
+                    });
+                    updateSetsLabel();
+                    updateSetsDisplay();
+                }
+            } else {
+                alert("Please add some weight first!");
+            }
+        }
+
+        // Update sets label
+        function updateSetsLabel() {
+            const lastSets = state.sets.slice(-5);
+            
+            if (lastSets.length > 0) {
+                const startSet = state.sets.length - lastSets.length + 1;
+                let setsText = '';
+                
+                lastSets.forEach((set, index) => {
+                    setsText += `Set ${startSet + index}: ${set.weight + 20} kg x ${set.reps} reps\n`;
+                });
+                
+                setsLabel.textContent = setsText;
+            } else {
+                setsLabel.textContent = 'Sets: None';
+            }
+        }
+
+        // Update sets display on sets screen
+        function updateSetsDisplay() {
+            if (state.sets.length > 0) {
+                let setsText = '';
+                
+                state.sets.forEach((set, index) => {
+                    setsText += `Set ${index + 1}: ${set.weight + 20} kg x ${set.reps} reps\n`;
+                });
+                
+                setsDisplay.textContent = setsText;
+            } else {
+                setsDisplay.textContent = 'No sets completed yet';
+            }
+        }
+
+        // Event listeners
+        plateButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const weight = parseInt(button.dataset.weight);
+                addPlate(weight);
+            });
+        });
+
+        setStarterButton.addEventListener('click', startSet);
+        setButton.addEventListener('click', startSet);
+        
+        resetButton.addEventListener('click', resetApp);
+        resetWeightButton.addEventListener('click', resetWeight);
+        
+        goBackButton.addEventListener('click', () => {
+            showScreen('weight-screen');
+        });
+
+        // Initialize
+        updateTotalWeight();
+    </script>
+</body>
+</html>
