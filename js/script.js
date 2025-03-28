@@ -73,21 +73,123 @@ function resetWeight() {
     updateTotalWeight();
 }
 
-function saveSet() {
-    const reps = prompt("How many reps?", "5");
-    if (reps === null) return;
+// Add to DOM elements:
+elements.repPicker = document.getElementById('rep-picker');
+elements.repPickerModal = document.getElementById('rep-picker-modal');
+elements.cancelReps = document.getElementById('cancel-reps');
+elements.confirmReps = document.getElementById('confirm-reps');
 
-    state.sets.push({
-        exercise: state.currentExercise,
-        weight: state.totalWeight,
-        reps: parseInt(reps) || 0,
-        date: new Date().toISOString()
-    });
-    
-    localStorage.setItem('gym-sets', JSON.stringify(state.sets));
-    updateSetsLabel();
-    resetRestTimer();
+// Replace saveSet() with:
+function showRepPicker() {
+  // Generate rep options (1-20)
+  elements.repPicker.innerHTML = '';
+  for (let i = 1; i <= 20; i++) {
+    const repOption = document.createElement('div');
+    repOption.textContent = i;
+    repOption.dataset.value = i;
+    elements.repPicker.appendChild(repOption);
+  }
+  
+  // Center the picker on 5 reps by default
+  elements.repPicker.style.transform = 'translateY(60px)';
+  elements.repPicker.children[4].style.fontWeight = 'bold';
+  elements.repPicker.children[4].style.color = '#4CAF50';
+  
+  elements.repPickerModal.style.display = 'flex';
+  state.selectedReps = 5;
 }
+
+// Add these event listeners (put with other listeners):
+elements.cancelReps.addEventListener('click', () => {
+  elements.repPickerModal.style.display = 'none';
+});
+
+elements.confirmReps.addEventListener('click', () => {
+  elements.repPickerModal.style.display = 'none';
+  saveSetWithReps(state.selectedReps);
+});
+
+// Add touch events for picker
+let startY;
+elements.repPicker.addEventListener('touchstart', (e) => {
+  startY = e.touches[0].clientY;
+});
+
+elements.repPicker.addEventListener('touchmove', (e) => {
+  const y = e.touches[0].clientY;
+  const deltaY = y - startY;
+  elements.repPicker.style.transform = `translateY(${60 + deltaY * 0.3}px)`;
+  highlightCenterRep();
+});
+
+elements.repPicker.addEventListener('touchend', () => {
+  snapToNearestRep();
+});
+
+function highlightCenterRep() {
+  const repOptions = elements.repPicker.children;
+  const pickerRect = elements.repPicker.getBoundingClientRect();
+  const centerY = pickerRect.top + pickerRect.height / 2;
+  
+  for (let i = 0; i < repOptions.length; i++) {
+    const option = repOptions[i];
+    const optionRect = option.getBoundingClientRect();
+    const optionCenterY = optionRect.top + optionRect.height / 2;
+    
+    if (Math.abs(optionCenterY - centerY) < 15) {
+      option.style.fontWeight = 'bold';
+      option.style.color = '#4CAF50';
+      state.selectedReps = parseInt(option.dataset.value);
+    } else {
+      option.style.fontWeight = 'normal';
+      option.style.color = 'white';
+    }
+  }
+}
+
+function snapToNearestRep() {
+  const repOptions = elements.repPicker.children;
+  const pickerRect = elements.repPicker.getBoundingClientRect();
+  const centerY = pickerRect.top + pickerRect.height / 2;
+  
+  let closestRep = null;
+  let minDistance = Infinity;
+  
+  for (let i = 0; i < repOptions.length; i++) {
+    const option = repOptions[i];
+    const optionRect = option.getBoundingClientRect();
+    const optionCenterY = optionRect.top + optionRect.height / 2;
+    const distance = Math.abs(optionCenterY - centerY);
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestRep = i;
+    }
+  }
+  
+  if (closestRep !== null) {
+    const offset = 60 - (closestRep * 30);
+    elements.repPicker.style.transform = `translateY(${offset}px)`;
+    state.selectedReps = parseInt(repOptions[closestRep].dataset.value);
+    highlightCenterRep();
+  }
+}
+
+function saveSetWithReps(reps) {
+  state.sets.push({
+    exercise: state.currentExercise,
+    weight: state.totalWeight,
+    reps: reps,
+    date: new Date().toISOString()
+  });
+  
+  localStorage.setItem('gym-sets', JSON.stringify(state.sets));
+  updateSetsLabel();
+  resetRestTimer();
+}
+
+// Replace the original set button listener:
+elements.setButton.addEventListener('click', showRepPicker);
 
 function deleteLastSet() {
     if (state.sets.length > 0) {
