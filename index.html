@@ -1,42 +1,73 @@
-// Rep Wheel Logic
-let currentReps = 5;
-const repWheel = document.getElementById('rep-wheel-container');
-const repValue = document.getElementById('rep-value');
-
-function showRepWheel() {
-  if (state.totalWeight <= 20) {
-    alert("Add weight first!");
-    return;
-  }
-  repWheel.style.display = 'flex';
-  currentReps = 5; // Reset to default
-  repValue.textContent = currentReps;
-}
-
-document.getElementById('rep-up').addEventListener('click', () => {
-  if(currentReps < 50) currentReps++;
-  repValue.textContent = currentReps;
-});
-
-document.getElementById('rep-down').addEventListener('click', () => {
-  if(currentReps > 1) currentReps--;
-  repValue.textContent = currentReps;
-});
-
-document.getElementById('rep-confirm').addEventListener('click', () => {
-  repWheel.style.display = 'none';
-  
-  state.sets.push({
-    exercise: state.currentExercise,
-    weight: state.totalWeight,
-    reps: currentReps,
-    date: new Date().toISOString()
-  });
-  
-  localStorage.setItem('gym-sets', JSON.stringify(state.sets));
-  updateSetsLabel();
-  resetRestTimer();
-});
-
-// Replace the set-button click handler
-document.getElementById('set-button').addEventListener('click', showRepWheel);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Gym Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="screen-manager">
+        <!-- Home Screen -->
+        <div class="screen home-screen active" id="home-screen">
+            <div class="header">
+                Gym Tracker
+                <button class="home-button" style="visibility: hidden;">Home</button>
+            </div>
+            <div class="equipment-buttons">
+                <div class="equipment-button" id="barbell-button">
+                    Barbell
+                </div>
+                <div class="equipment-button" id="dumbbell-button">
+                    Dumbbell
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barbell Screen -->
+        <div class="screen" id="barbell-screen">
+            <div class="header">
+                Barbell Tracker
+                <button class="home-button">Home</button>
+            </div>
+            <div class="barbell-section">
+                <div class="total-weight" id="total-weight-label">Total: 20 kg</div>
+                <div class="barbell-visual-container">
+                    <div class="barbell-visual">
+                        <div class="plate-column left-plates" id="left-plates"></div>
+                        <div class="barbell-sleeve"></div>
+                        <div class="plate-column right-plates" id="right-plates"></div>
+                    </div>
+                </div>
+                <div class="sets-display" id="sets-label">No sets yet</div>
+            </div>
+            <div class="controls">
+                <select id="exercise-select">
+                    <option value="squat">Squat</option>
+                    <option value="bench">Bench Press</option>
+                    <option value="incline_bench">Incline Bench Press (SM)</option>
+                    <option value="deadlift">Deadlift</option>
+                    <option value="ohp">Overhead Press</option>
+                    <option value="rows">Barbell Rows</option>
+                </select>
+                <div class="button-row">
+                    <button id="set-button">💪 Save Set</button>
+                    <button id="reset-weight-button">🔄 Reset Weight</button>
+                </div>
+                <div class="button-row">
+                    <button id="delete-last-button">❌ Delete Last Set</button>
+                </div>
+                <div class="timer" id="rest-timer">Rest: 0:00</div>
+                <div class="plate-buttons">
+                    <button class="plate-button" data-weight="5">5 kg</button>
+                    <button class="plate-button" data-weight="10">10 kg</button>
+                    <button class="plate-button" data-weight="15">15 kg</button>
+                    <button class="plate-button" data-weight="20">20 kg</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
