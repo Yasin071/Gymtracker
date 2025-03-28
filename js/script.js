@@ -10,9 +10,7 @@ const state = {
     isDragging: false,
     startY: 0,
     currentY: 0,
-    pickerOffset: 75, // Default position for 5 reps
-    velocity: 0,
-    lastTime: 0
+    pickerOffset: 75 // Default position for 5 reps
 };
 
 // DOM elements
@@ -200,8 +198,8 @@ function setupRepPicker() {
     });
     
     // Touch events
-    elements.pickerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
-    elements.pickerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    elements.pickerContainer.addEventListener('touchstart', handleTouchStart);
+    elements.pickerContainer.addEventListener('touchmove', handleTouchMove);
     elements.pickerContainer.addEventListener('touchend', handleTouchEnd);
     
     // Mouse events for desktop
@@ -236,18 +234,6 @@ function handleTouchStart(e) {
     state.isDragging = true;
     state.startY = e.touches ? e.touches[0].clientY : e.clientY;
     state.currentY = state.startY;
-    state.lastTime = Date.now();
-    state.velocity = 0;
-    
-    // Get current transform
-    const transform = window.getComputedStyle(elements.repPicker).getPropertyValue('transform');
-    if (transform && transform !== 'none') {
-        const matrix = transform.match(/^matrix\((.+)\)$/);
-        if (matrix) {
-            state.pickerOffset = parseFloat(matrix[1].split(', ')[5]) || 75;
-        }
-    }
-    
     elements.repPicker.style.transition = 'none';
     e.preventDefault();
 }
@@ -256,18 +242,14 @@ function handleTouchMove(e) {
     if (!state.isDragging) return;
     
     const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const now = Date.now();
-    const deltaTime = now - state.lastTime;
-    
-    if (deltaTime > 0) {
-        const deltaY = y - state.currentY;
-        state.velocity = deltaY / deltaTime * 800;
-        state.lastTime = now;
-    }
-    
-    state.pickerOffset += (y - state.currentY) * 0.8;
+    const deltaY = y - state.currentY;
     state.currentY = y;
+    
+    // Move the picker
+    state.pickerOffset += deltaY;
     elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    
+    // Highlight closest rep
     highlightClosestRep();
     e.preventDefault();
 }
@@ -276,50 +258,26 @@ function handleTouchEnd() {
     if (!state.isDragging) return;
     state.isDragging = false;
     
-    // Apply momentum if significant velocity
-    if (Math.abs(state.velocity) > 50) {
-        const startOffset = state.pickerOffset;
-        const momentumDistance = state.velocity * 0.15;
-        const duration = 400;
-        
-        let startTime = null;
-        
-        function animateMomentum(timestamp) {
-            if (!startTime) startTime = timestamp;
-            const elapsed = timestamp - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            state.pickerOffset = startOffset + momentumDistance * easeProgress;
-            elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-            
-            if (progress < 1) {
-                requestAnimationFrame(animateMomentum);
-                highlightClosestRep();
-            } else {
-                snapToNearestRep();
-            }
-        }
-        
-        requestAnimationFrame(animateMomentum);
-    } else {
-        snapToNearestRep();
+    // Stay at current position
+    const closestRep = getClosestRep();
+    if (closestRep) {
+        state.selectedReps = closestRep;
     }
 }
 
 function highlightClosestRep() {
-    const repOptions = elements.repPicker.children;
-    const containerRect = elements.pickerContainer.getBoundingClientRect();
-    const centerY = containerRect.top + containerRect.height / 2;
-    
-    Array.from(repOptions).forEach(option => {
-        const optionRect = option.getBoundingClientRect();
-        const optionCenterY = optionRect.top + optionRect.height / 2;
-        option.classList.toggle('selected', Math.abs(optionCenterY - centerY) < 15);
-    });
+    const closestRep = getClosestRep();
+    if (closestRep) {
+        const repOptions = elements.repPicker.children;
+        const selectedIndex = closestRep - 1;
+        
+        Array.from(repOptions).forEach((option, index) => {
+            option.classList.toggle('selected', index === selectedIndex);
+        });
+    }
 }
 
-function snapToNearestRep() {
+function getClosestRep() {
     const repOptions = elements.repPicker.children;
     const containerRect = elements.pickerContainer.getBoundingClientRect();
     const centerY = containerRect.top + containerRect.height / 2;
@@ -338,13 +296,11 @@ function snapToNearestRep() {
         }
     });
     
-    if (closestRep) {
-        updateSelectedRep(closestRep);
-    }
+    return closestRep;
 }
 
 // Start the app
-init();
+document.addEventListener('DOMContentLoaded', init);
 
 // Handle iPhone home bar
 document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
