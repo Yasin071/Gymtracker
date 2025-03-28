@@ -2,149 +2,174 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>Gym Tracker</title>
     <style>
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
             background-color: #000;
             color: white;
             height: 100vh;
+            height: calc(100vh - env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
         }
         
         .screen-manager {
             flex: 1;
-            position: relative;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
             background-color: #111;
+            overflow: hidden;
+            position: relative;
         }
         
-        .screen {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            padding: 0;
-        }
-        
-        .screen.active {
-            display: flex;
-        }
-        
+        /* Header with home button */
         .header {
             background-color: #333;
             color: white;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             font-weight: bold;
             font-size: 1.2rem;
-            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
         
-        .main-content {
+        .home-button {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        /* Home Screen */
+        .home-screen {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
         }
         
-        .barbell-layout {
+        .equipment-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #333;
+            border: 2px solid #444;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        /* Barbell Screen */
+        .barbell-section {
             flex: 1;
             display: flex;
             flex-direction: column;
-            border-bottom: 1px solid #444;
+            min-height: 0;
         }
         
         .total-weight {
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
-            padding: 15px;
+            padding: 10px;
             background-color: #333;
             color: white;
-            border-bottom: 1px solid #444;
         }
         
-        .barbell-area {
+        .barbell-visual-container {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
+            min-height: 0;
+            padding: 10px;
         }
         
-        .barbell-container {
+        .barbell-visual {
             display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 150px;
             width: 100%;
-            max-width: 350px; /* Wider to accommodate side plates */
-            height: 200px; /* Taller for vertical stacking */
+            max-width: 300px;
             position: relative;
         }
         
         .plate-column {
-            width: 80px;
+            width: 60px;
             display: flex;
-            flex-direction: column-reverse; /* Stack from bottom up */
+            flex-direction: column;
             align-items: center;
-            gap: 3px;
-            padding-bottom: 10px;
+            justify-content: flex-end;
+            height: 100%;
+            position: absolute;
+            bottom: 0;
         }
         
-        .left-plates-column {
-            align-items: flex-end;
-            padding-right: 5px;
+        .left-plates {
+            left: calc(50% - 80px);
         }
         
-        .right-plates-column {
-            align-items: flex-start;
-            padding-left: 5px;
+        .right-plates {
+            left: calc(50% + 20px);
         }
         
         .barbell-sleeve {
-            width: 60px;
-            height: 80px;
+            width: 50px;
+            height: 60px;
             background-color: #333;
-            align-self: center;
+            position: absolute;
+            left: calc(50% - 25px);
+            bottom: 0;
             z-index: 2;
             border-radius: 3px;
         }
         
         .plate {
             color: white;
-            padding: 5px;
+            padding: 4px;
             border-radius: 4px;
             text-align: center;
-            min-width: 50px;
-            font-size: 0.8rem;
+            min-width: 45px;
+            font-size: 0.75rem;
             font-weight: bold;
             margin: 2px 0;
+            position: relative;
         }
         
-        .sets-label {
-            padding: 10px;
+        .sets-display {
+            padding: 8px;
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             white-space: pre-line;
-            border-top: 1px solid #444;
-            max-height: 20vh;
+            max-height: 80px;
             overflow-y: auto;
             background-color: #111;
         }
@@ -152,138 +177,145 @@
         .controls {
             padding: 10px;
             background-color: #222;
-            border-top: 1px solid #444;
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin: 5px 0;
         }
         
         button {
             color: white;
             border: none;
-            padding: 12px;
-            margin: 5px 0;
+            padding: 10px;
             text-align: center;
-            text-decoration: none;
-            font-size: 1rem;
-            cursor: pointer;
+            font-size: 0.9rem;
             border-radius: 5px;
-            transition: background-color 0.3s;
-            width: 100%;
+            flex: 1;
             font-weight: bold;
         }
         
-        button:active {
-            opacity: 0.8;
-        }
-        
-        .button-row {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .button-row button {
-            flex: 1;
+        .timer {
+            text-align: center;
+            font-size: 1rem;
+            padding: 8px;
+            background-color: #333;
+            color: white;
+            border-radius: 5px;
+            margin: 5px 0;
         }
         
         .plate-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-top: 8px;
         }
         
-        select {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #444;
-            background-color: #333;
-            color: white;
-        }
-        
-        .timer {
-            text-align: center;
-            font-size: 1.2rem;
-            padding: 10px;
-            background-color: #333;
-            color: white;
-            border-radius: 5px;
-            margin: 5px 0;
-            border: 1px solid #444;
-        }
-        
-        /* Color-coded weight plates */
+        /* Color coding */
         button[data-weight="5"], .plate[data-weight="5"] { 
-            background-color: #FF9800; /* Orange */
+            background-color: #FF9800;
             border: 1px solid #e68a00;
         }
         button[data-weight="10"], .plate[data-weight="10"] { 
-            background-color: #2196F3; /* Blue */
+            background-color: #2196F3;
             border: 1px solid #1a81d6;
         }
         button[data-weight="15"], .plate[data-weight="15"] { 
-            background-color: #9C27B0; /* Purple */
+            background-color: #9C27B0;
             border: 1px solid #822099;
         }
         button[data-weight="20"], .plate[data-weight="20"] { 
-            background-color: #F44336; /* Red */
+            background-color: #F44336;
             border: 1px solid #d32f2f;
         }
         
-        #set-button {
-            background-color: #4CAF50;
-            border: 1px solid #3e8e41;
+        #set-button { background-color: #4CAF50; border: 1px solid #3e8e41; }
+        #reset-weight-button { background-color: #f44336; border: 1px solid #d32f2f; }
+        #delete-last-button { background-color: #FF9800; border: 1px solid #e68a00; }
+        
+        /* Screen management */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            width: 100%;
         }
         
-        #reset-weight-button {
-            background-color: #f44336;
-            border: 1px solid #d32f2f;
-        }
-        
-        #delete-last-button {
-            background-color: #FF9800;
-            border: 1px solid #e68a00;
+        .screen.active {
+            display: flex;
         }
     </style>
 </head>
 <body>
     <div class="screen-manager">
-        <!-- Weight Screen -->
-        <div class="screen weight-screen active" id="weight-screen">
-            <div class="header">Gym Tracker</div>
-            <div class="main-content">
-                <div class="barbell-layout">
-                    <div class="total-weight" id="total-weight-label">Total: 20 kg</div>
-                    <div class="barbell-area">
-                        <div class="barbell-container">
-                            <div class="plate-column left-plates-column" id="left-plates-column"></div>
-                            <div class="barbell-sleeve"></div>
-                            <div class="plate-column right-plates-column" id="right-plates-column"></div>
-                        </div>
-                    </div>
-                    <div class="sets-label" id="sets-label">No sets yet</div>
+        <!-- Home Screen -->
+        <div class="screen home-screen active" id="home-screen">
+            <div class="header">
+                Gym Tracker
+                <button class="home-button" style="visibility: hidden;">Home</button>
+            </div>
+            <div class="equipment-buttons">
+                <div class="equipment-button" id="barbell-button">
+                    Barbell
                 </div>
-                <div class="controls">
-                    <select id="exercise-select">
-                        <option value="squat">Squat</option>
-                        <option value="bench">Bench Press</option>
-                        <option value="deadlift">Deadlift</option>
-                        <option value="ohp">Overhead Press</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                    <div class="button-row">
-                        <button id="set-button">💪 Save Set</button>
-                        <button id="reset-weight-button">🔄 Reset Weight</button>
+                <div class="equipment-button" id="dumbbell-button">
+                    Dumbbell
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barbell Screen -->
+        <div class="screen" id="barbell-screen">
+            <div class="header">
+                Barbell Tracker
+                <button class="home-button">Home</button>
+            </div>
+            <div class="barbell-section">
+                <div class="total-weight" id="total-weight-label">Total: 20 kg</div>
+                <div class="barbell-visual-container">
+                    <div class="barbell-visual">
+                        <div class="plate-column left-plates" id="left-plates"></div>
+                        <div class="barbell-sleeve"></div>
+                        <div class="plate-column right-plates" id="right-plates"></div>
                     </div>
-                    <div class="button-row">
-                        <button id="delete-last-button">❌ Delete Last Set</button>
-                    </div>
-                    <div class="timer" id="rest-timer">Rest: 0:00</div>
-                    <div class="plate-buttons">
-                        <button class="plate-button" data-weight="5">5 kg</button>
-                        <button class="plate-button" data-weight="10">10 kg</button>
-                        <button class="plate-button" data-weight="15">15 kg</button>
-                        <button class="plate-button" data-weight="20">20 kg</button>
-                    </div>
+                </div>
+                <div class="sets-display" id="sets-label">No sets yet</div>
+            </div>
+            <div class="controls">
+                <select id="exercise-select">
+                    <option value="squat">Squat</option>
+                    <option value="bench">Bench Press</option>
+                    <option value="incline_bench">Incline Bench Press (SM)</option>
+                    <option value="deadlift">Deadlift</option>
+                    <option value="ohp">Overhead Press</option>
+                    <option value="rows">Barbell Rows</option>
+                </select>
+                <div class="button-row">
+                    <button id="set-button">💪 Save Set</button>
+                    <button id="reset-weight-button">🔄 Reset Weight</button>
+                </div>
+                <div class="button-row">
+                    <button id="delete-last-button">❌ Delete Last Set</button>
+                </div>
+                <div class="timer" id="rest-timer">Rest: 0:00</div>
+                <div class="plate-buttons">
+                    <button class="plate-button" data-weight="5">5 kg</button>
+                    <button class="plate-button" data-weight="10">10 kg</button>
+                    <button class="plate-button" data-weight="15">15 kg</button>
+                    <button class="plate-button" data-weight="20">20 kg</button>
                 </div>
             </div>
         </div>
@@ -292,32 +324,51 @@
     <script>
         // App state
         const state = {
-            totalWeight: 20, // Barbell included
+            totalWeight: 20,
             currentExercise: "squat",
             sets: JSON.parse(localStorage.getItem('gym-sets')) || [],
             restTimer: null,
             restSeconds: 0,
-            currentPlates: [] // Track added plates
+            currentPlates: []
         };
 
         // DOM elements
-        const totalWeightLabel = document.getElementById('total-weight-label');
-        const setsLabel = document.getElementById('sets-label');
-        const leftPlatesColumn = document.getElementById('left-plates-column');
-        const rightPlatesColumn = document.getElementById('right-plates-column');
-        const setButton = document.getElementById('set-button');
-        const resetWeightButton = document.getElementById('reset-weight-button');
-        const deleteLastButton = document.getElementById('delete-last-button');
-        const plateButtons = document.querySelectorAll('.plate-button');
-        const exerciseSelect = document.getElementById('exercise-select');
-        const restTimerDisplay = document.getElementById('rest-timer');
+        const elements = {
+            screens: {
+                home: document.getElementById('home-screen'),
+                barbell: document.getElementById('barbell-screen')
+            },
+            buttons: {
+                home: document.querySelectorAll('.home-button'),
+                barbell: document.getElementById('barbell-button'),
+                dumbbell: document.getElementById('dumbbell-button')
+            },
+            totalWeight: document.getElementById('total-weight-label'),
+            setsLabel: document.getElementById('sets-label'),
+            leftPlates: document.getElementById('left-plates'),
+            rightPlates: document.getElementById('right-plates'),
+            setButton: document.getElementById('set-button'),
+            resetButton: document.getElementById('reset-weight-button'),
+            deleteButton: document.getElementById('delete-last-button'),
+            plateButtons: document.querySelectorAll('.plate-button'),
+            exerciseSelect: document.getElementById('exercise-select'),
+            timerDisplay: document.getElementById('rest-timer')
+        };
 
         // Initialize
         updateTotalWeight();
         updateSetsLabel();
         startRestTimer();
 
-        // Add plates to barbell
+        // Navigation functions
+        function showScreen(screenName) {
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('active');
+            });
+            elements.screens[screenName].classList.add('active');
+        }
+
+        // Core functions
         function addPlate(weight) {
             state.currentPlates.push(weight);
             renderPlates();
@@ -325,44 +376,20 @@
             updateTotalWeight();
         }
 
-        // Remove last added plate
-        function removeLastPlate() {
-            if (state.currentPlates.length > 0) {
-                const lastWeight = state.currentPlates.pop();
-                renderPlates();
-                state.totalWeight -= lastWeight * 2;
-                updateTotalWeight();
-            }
-        }
-
-        // Render plates in separate columns
         function renderPlates() {
-            // Clear existing plates
-            leftPlatesColumn.innerHTML = '';
-            rightPlatesColumn.innerHTML = '';
+            elements.leftPlates.innerHTML = '';
+            elements.rightPlates.innerHTML = '';
             
-            // Render plates in columns (automatically stacks vertically)
             state.currentPlates.forEach(weight => {
-                const leftPlate = document.createElement('div');
-                leftPlate.className = 'plate';
-                leftPlate.textContent = `${weight} kg`;
-                leftPlate.dataset.weight = weight;
-                leftPlatesColumn.appendChild(leftPlate);
-                
-                const rightPlate = document.createElement('div');
-                rightPlate.className = 'plate';
-                rightPlate.textContent = `${weight} kg`;
-                rightPlate.dataset.weight = weight;
-                rightPlatesColumn.appendChild(rightPlate);
+                const plate = document.createElement('div');
+                plate.className = 'plate';
+                plate.textContent = `${weight} kg`;
+                plate.dataset.weight = weight;
+                elements.leftPlates.appendChild(plate.cloneNode(true));
+                elements.rightPlates.appendChild(plate);
             });
         }
 
-        // Update total weight display
-        function updateTotalWeight() {
-            totalWeightLabel.textContent = `Total: ${state.totalWeight} kg`;
-        }
-
-        // Reset only weights
         function resetWeight() {
             state.currentPlates = [];
             state.totalWeight = 20;
@@ -370,110 +397,83 @@
             updateTotalWeight();
         }
 
-        // Save a completed set
         function saveSet() {
             const reps = prompt("How many reps?", "5");
-            if (reps === null) return; // User cancelled
+            if (reps === null) return;
 
-            const newSet = {
+            state.sets.push({
                 exercise: state.currentExercise,
                 weight: state.totalWeight,
                 reps: parseInt(reps) || 0,
                 date: new Date().toISOString()
-            };
-
-            state.sets.push(newSet);
+            });
+            
             localStorage.setItem('gym-sets', JSON.stringify(state.sets));
             updateSetsLabel();
             resetRestTimer();
         }
 
-        // Delete last set
         function deleteLastSet() {
             if (state.sets.length > 0) {
                 state.sets.pop();
                 localStorage.setItem('gym-sets', JSON.stringify(state.sets));
                 updateSetsLabel();
-            } else {
-                alert("No sets to delete!");
             }
         }
 
-        // Update sets label
+        function updateTotalWeight() {
+            elements.totalWeight.textContent = `Total: ${state.totalWeight} kg`;
+        }
+
         function updateSetsLabel() {
             const exerciseSets = state.sets
                 .filter(set => set.exercise === state.currentExercise)
-                .slice(-5); // Show last 5 sets
+                .slice(-3);
             
-            if (exerciseSets.length > 0) {
-                let setsText = `${state.currentExercise.toUpperCase()}:\n`;
-                exerciseSets.forEach((set, i) => {
-                    setsText += `${set.weight}kg × ${set.reps}\n`;
-                });
-                setsLabel.textContent = setsText;
-            } else {
-                setsLabel.textContent = "No sets yet";
-            }
+            elements.setsLabel.textContent = exerciseSets.length > 0
+                ? `${state.currentExercise.toUpperCase().replace('_', ' ')}:\n${exerciseSets.map(set => 
+                    `${set.weight}kg × ${set.reps}`).join('\n')}`
+                : "No sets yet";
         }
 
-        // Rest timer functions
         function startRestTimer() {
             state.restTimer = setInterval(() => {
                 state.restSeconds++;
                 const mins = Math.floor(state.restSeconds / 60);
                 const secs = state.restSeconds % 60;
-                restTimerDisplay.textContent = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                elements.timerDisplay.textContent = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
             }, 1000);
         }
 
         function resetRestTimer() {
             state.restSeconds = 0;
-            restTimerDisplay.textContent = "Rest: 0:00";
+            elements.timerDisplay.textContent = "Rest: 0:00";
         }
 
         // Event listeners
-        plateButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const weight = parseFloat(button.dataset.weight);
-                addPlate(weight);
-            });
+        elements.buttons.home.forEach(btn => {
+            btn.addEventListener('click', () => showScreen('home'));
+        });
+        
+        elements.buttons.barbell.addEventListener('click', () => showScreen('barbell'));
+        elements.buttons.dumbbell.addEventListener('click', () => alert('Dumbbell tracker coming soon!'));
+
+        elements.plateButtons.forEach(btn => {
+            btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
         });
 
-        setButton.addEventListener('click', saveSet);
-        resetWeightButton.addEventListener('click', resetWeight);
-        deleteLastButton.addEventListener('click', deleteLastSet);
+        elements.setButton.addEventListener('click', saveSet);
+        elements.resetButton.addEventListener('click', resetWeight);
+        elements.deleteButton.addEventListener('click', deleteLastSet);
         
-        // Double-tap plate to remove it
-        plateButtons.forEach(button => {
-            button.addEventListener('dblclick', () => {
-                const weight = parseFloat(button.dataset.weight);
-                const index = state.currentPlates.lastIndexOf(weight);
-                if (index > -1) {
-                    state.currentPlates.splice(index, 1);
-                    renderPlates();
-                    state.totalWeight -= weight * 2;
-                    updateTotalWeight();
-                }
-            });
-        });
-        
-        exerciseSelect.addEventListener('change', (e) => {
-            // Reset weight when changing exercise
-            if (state.currentExercise !== e.target.value) {
-                resetWeight();
-            }
+        elements.exerciseSelect.addEventListener('change', (e) => {
+            if (state.currentExercise !== e.target.value) resetWeight();
             state.currentExercise = e.target.value;
             updateSetsLabel();
         });
 
-        // Service Worker for offline support
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
+        // Handle iPhone home bar
+        document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
     </script>
 </body>
 </html>
