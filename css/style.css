@@ -249,3 +249,69 @@ button[data-weight="20"], .plate[data-weight="20"] {
 .screen.active {
     display: flex;
 }
+/* Picker Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 15px;
+  width: 80%;
+  max-width: 300px;
+  text-align: center;
+}
+
+.modal h3 {
+  margin-bottom: 15px;
+}
+
+.picker-container {
+  height: 150px;
+  overflow: hidden;
+  position: relative;
+  margin: 20px 0;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.picker div {
+  padding: 10px 0;
+  font-size: 1.5rem;
+  width: 100%;
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+#cancel-reps {
+  background-color: #f44336;
+}
+
+#confirm-reps {
+  background-color: #4CAF50;
+}
