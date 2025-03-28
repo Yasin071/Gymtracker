@@ -10,10 +10,10 @@ const state = {
     isDragging: false,
     startY: 0,
     currentY: 0,
-    pickerOffset: 0,
+    pickerOffset: 75, // Start at center position (for 5 reps)
     velocity: 0,
-    lastY: 0,
-    lastTime: 0
+    lastTime: 0,
+    animationFrame: null
 };
 
 // DOM elements
@@ -50,9 +50,8 @@ function init() {
     updateTotalWeight();
     updateSetsLabel();
     startRestTimer();
-    setupEventListeners();
     setupRepPicker();
-    requestAnimationFrame(animatePicker);
+    setupEventListeners();
 }
 
 // Navigation functions
@@ -143,9 +142,10 @@ function resetRestTimer() {
     elements.timerDisplay.textContent = "Rest: 0:00";
 }
 
-// Slower Rep Picker Functions
+// Rep Picker Functions
 function setupRepPicker() {
     // Create rep options (1-20)
+    elements.repPicker.innerHTML = '';
     for (let i = 1; i <= 20; i++) {
         const repOption = document.createElement('div');
         repOption.textContent = i;
@@ -163,12 +163,11 @@ function showRepPicker() {
 function updateSelectedRep(rep) {
     const repOptions = elements.repPicker.children;
     const selectedIndex = rep - 1;
-    const offset = 75 - (selectedIndex * 30);
-    
-    state.pickerOffset = offset;
-    elements.repPicker.style.transition = 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)';
-    elements.repPicker.style.transform = `translateY(${offset}px)`;
+    state.pickerOffset = 75 - (selectedIndex * 30); // 30px per item
     state.selectedReps = rep;
+    
+    elements.repPicker.style.transition = 'transform 0.4s ease-out';
+    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
     
     // Highlight selected rep
     Array.from(repOptions).forEach((option, index) => {
@@ -176,10 +175,11 @@ function updateSelectedRep(rep) {
     });
 }
 
+// Touch/Mouse Handlers
 function handleTouchStart(e) {
+    cancelAnimationFrame(state.animationFrame);
     state.isDragging = true;
     state.startY = e.touches ? e.touches[0].clientY : e.clientY;
-    state.lastY = state.startY;
     state.lastTime = Date.now();
     state.velocity = 0;
     elements.repPicker.style.transition = 'none';
@@ -194,13 +194,13 @@ function handleTouchMove(e) {
     const deltaTime = now - state.lastTime;
     
     if (deltaTime > 0) {
-        const deltaY = y - state.lastY;
-        state.velocity = deltaY / deltaTime * 500; // Slower velocity
-        state.lastY = y;
+        const deltaY = y - state.startY;
+        state.velocity = deltaY / deltaTime * 800; // Slower movement
         state.lastTime = now;
+        state.startY = y;
     }
     
-    state.pickerOffset += (y - state.currentY) * 0.7; // Reduced sensitivity
+    state.pickerOffset += (y - state.currentY) * 0.6; // Reduced sensitivity
     state.currentY = y;
     elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
     highlightClosestRep();
@@ -211,28 +211,32 @@ function handleTouchEnd() {
     if (!state.isDragging) return;
     state.isDragging = false;
     
-    const momentumDuration = 600; // Longer momentum
+    // Apply momentum
     const startOffset = state.pickerOffset;
-    const endOffset = startOffset + state.velocity * 0.08; // Reduced momentum
+    const momentumDistance = state.velocity * 0.15; // Reduced momentum
+    const duration = 500; // Longer duration
     
     let startTime = null;
     
-    function momentumAnimation(timestamp) {
+    function animateMomentum(timestamp) {
         if (!startTime) startTime = timestamp;
-        const progress = timestamp - startTime;
-        const percentage = Math.min(progress / momentumDuration, 1);
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(elapsed / duration, 1);
         
-        state.pickerOffset = startOffset + (endOffset - startOffset) * Math.sin(percentage * Math.PI/2);
+        // Ease-out function
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+        state.pickerOffset = startOffset + momentumDistance * easeProgress;
         elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
         
-        if (progress < momentumDuration) {
-            requestAnimationFrame(momentumAnimation);
+        if (progress < 1) {
+            state.animationFrame = requestAnimationFrame(animateMomentum);
+            highlightClosestRep();
         } else {
             snapToNearestRep();
         }
     }
     
-    requestAnimationFrame(momentumAnimation);
+    state.animationFrame = requestAnimationFrame(animateMomentum);
 }
 
 function highlightClosestRep() {
@@ -271,20 +275,6 @@ function snapToNearestRep() {
     }
 }
 
-function animatePicker() {
-    if (!state.isDragging && Math.abs(state.velocity) > 3) {
-        state.pickerOffset += state.velocity * 0.008; // Slower movement
-        state.velocity *= 0.82; // Faster deceleration
-        elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-        highlightClosestRep();
-        
-        if (Math.abs(state.velocity) < 3) {
-            snapToNearestRep();
-        }
-    }
-    requestAnimationFrame(animatePicker);
-}
-
 // Event Listeners
 function setupEventListeners() {
     // Navigation
@@ -321,8 +311,8 @@ function setupEventListeners() {
     });
     
     // Touch events
-    elements.pickerContainer.addEventListener('touchstart', handleTouchStart);
-    elements.pickerContainer.addEventListener('touchmove', handleTouchMove);
+    elements.pickerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+    elements.pickerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     elements.pickerContainer.addEventListener('touchend', handleTouchEnd);
     
     // Mouse events for desktop
