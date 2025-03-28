@@ -5,7 +5,12 @@ const state = {
     sets: JSON.parse(localStorage.getItem('gym-sets')) || [],
     restTimer: null,
     restSeconds: 0,
-    currentPlates: []
+    currentPlates: [],
+    selectedReps: 5,
+    isDragging: false,
+    startY: 0,
+    currentY: 0,
+    pickerOffset: 0
 };
 
 // DOM elements
@@ -28,13 +33,23 @@ const elements = {
     deleteButton: document.getElementById('delete-last-button'),
     plateButtons: document.querySelectorAll('.plate-button'),
     exerciseSelect: document.getElementById('exercise-select'),
-    timerDisplay: document.getElementById('rest-timer')
+    timerDisplay: document.getElementById('rest-timer'),
+    repPicker: document.getElementById('rep-picker'),
+    repPickerModal: document.getElementById('rep-picker-modal'),
+    cancelReps: document.getElementById('cancel-reps'),
+    confirmReps: document.getElementById('confirm-reps'),
+    pickerContainer: document.querySelector('.picker-container')
 };
 
 // Initialize
-updateTotalWeight();
-updateSetsLabel();
-startRestTimer();
+function init() {
+    showScreen('home');
+    updateTotalWeight();
+    updateSetsLabel();
+    startRestTimer();
+    setupEventListeners();
+    setupRepPicker();
+}
 
 // Navigation functions
 function showScreen(screenName) {
@@ -73,123 +88,18 @@ function resetWeight() {
     updateTotalWeight();
 }
 
-// Add to DOM elements:
-elements.repPicker = document.getElementById('rep-picker');
-elements.repPickerModal = document.getElementById('rep-picker-modal');
-elements.cancelReps = document.getElementById('cancel-reps');
-elements.confirmReps = document.getElementById('confirm-reps');
-
-// Replace saveSet() with:
-function showRepPicker() {
-  // Generate rep options (1-20)
-  elements.repPicker.innerHTML = '';
-  for (let i = 1; i <= 20; i++) {
-    const repOption = document.createElement('div');
-    repOption.textContent = i;
-    repOption.dataset.value = i;
-    elements.repPicker.appendChild(repOption);
-  }
-  
-  // Center the picker on 5 reps by default
-  elements.repPicker.style.transform = 'translateY(60px)';
-  elements.repPicker.children[4].style.fontWeight = 'bold';
-  elements.repPicker.children[4].style.color = '#4CAF50';
-  
-  elements.repPickerModal.style.display = 'flex';
-  state.selectedReps = 5;
-}
-
-// Add these event listeners (put with other listeners):
-elements.cancelReps.addEventListener('click', () => {
-  elements.repPickerModal.style.display = 'none';
-});
-
-elements.confirmReps.addEventListener('click', () => {
-  elements.repPickerModal.style.display = 'none';
-  saveSetWithReps(state.selectedReps);
-});
-
-// Add touch events for picker
-let startY;
-elements.repPicker.addEventListener('touchstart', (e) => {
-  startY = e.touches[0].clientY;
-});
-
-elements.repPicker.addEventListener('touchmove', (e) => {
-  const y = e.touches[0].clientY;
-  const deltaY = y - startY;
-  elements.repPicker.style.transform = `translateY(${60 + deltaY * 0.3}px)`;
-  highlightCenterRep();
-});
-
-elements.repPicker.addEventListener('touchend', () => {
-  snapToNearestRep();
-});
-
-function highlightCenterRep() {
-  const repOptions = elements.repPicker.children;
-  const pickerRect = elements.repPicker.getBoundingClientRect();
-  const centerY = pickerRect.top + pickerRect.height / 2;
-  
-  for (let i = 0; i < repOptions.length; i++) {
-    const option = repOptions[i];
-    const optionRect = option.getBoundingClientRect();
-    const optionCenterY = optionRect.top + optionRect.height / 2;
-    
-    if (Math.abs(optionCenterY - centerY) < 15) {
-      option.style.fontWeight = 'bold';
-      option.style.color = '#4CAF50';
-      state.selectedReps = parseInt(option.dataset.value);
-    } else {
-      option.style.fontWeight = 'normal';
-      option.style.color = 'white';
-    }
-  }
-}
-
-function snapToNearestRep() {
-  const repOptions = elements.repPicker.children;
-  const pickerRect = elements.repPicker.getBoundingClientRect();
-  const centerY = pickerRect.top + pickerRect.height / 2;
-  
-  let closestRep = null;
-  let minDistance = Infinity;
-  
-  for (let i = 0; i < repOptions.length; i++) {
-    const option = repOptions[i];
-    const optionRect = option.getBoundingClientRect();
-    const optionCenterY = optionRect.top + optionRect.height / 2;
-    const distance = Math.abs(optionCenterY - centerY);
-    
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestRep = i;
-    }
-  }
-  
-  if (closestRep !== null) {
-    const offset = 60 - (closestRep * 30);
-    elements.repPicker.style.transform = `translateY(${offset}px)`;
-    state.selectedReps = parseInt(repOptions[closestRep].dataset.value);
-    highlightCenterRep();
-  }
-}
-
 function saveSetWithReps(reps) {
-  state.sets.push({
-    exercise: state.currentExercise,
-    weight: state.totalWeight,
-    reps: reps,
-    date: new Date().toISOString()
-  });
-  
-  localStorage.setItem('gym-sets', JSON.stringify(state.sets));
-  updateSetsLabel();
-  resetRestTimer();
+    state.sets.push({
+        exercise: state.currentExercise,
+        weight: state.totalWeight,
+        reps: reps,
+        date: new Date().toISOString()
+    });
+    
+    localStorage.setItem('gym-sets', JSON.stringify(state.sets));
+    updateSetsLabel();
+    resetRestTimer();
 }
-
-// Replace the original set button listener:
-elements.setButton.addEventListener('click', showRepPicker);
 
 function deleteLastSet() {
     if (state.sets.length > 0) {
@@ -215,6 +125,7 @@ function updateSetsLabel() {
 }
 
 function startRestTimer() {
+    clearInterval(state.restTimer);
     state.restTimer = setInterval(() => {
         state.restSeconds++;
         const mins = Math.floor(state.restSeconds / 60);
@@ -228,27 +139,138 @@ function resetRestTimer() {
     elements.timerDisplay.textContent = "Rest: 0:00";
 }
 
-// Event listeners
-elements.buttons.home.forEach(btn => {
-    btn.addEventListener('click', () => showScreen('home'));
-});
+// Rep Picker Functions
+function setupRepPicker() {
+    // Create rep options (1-20)
+    for (let i = 1; i <= 20; i++) {
+        const repOption = document.createElement('div');
+        repOption.textContent = i;
+        repOption.dataset.value = i;
+        elements.repPicker.appendChild(repOption);
+    }
+    
+    // Set initial selected rep
+    updateSelectedRep(5);
+}
 
-elements.buttons.barbell.addEventListener('click', () => showScreen('barbell'));
-elements.buttons.dumbbell.addEventListener('click', () => alert('Dumbbell tracker coming soon!'));
+function showRepPicker() {
+    elements.repPickerModal.style.display = 'flex';
+    updateSelectedRep(state.selectedReps);
+}
 
-elements.plateButtons.forEach(btn => {
-    btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
-});
+function updateSelectedRep(rep) {
+    const repOptions = elements.repPicker.children;
+    const selectedIndex = rep - 1;
+    const offset = 75 - (selectedIndex * 30);
+    
+    elements.repPicker.style.transform = `translateY(${offset}px)`;
+    state.selectedReps = rep;
+    
+    // Update visual selection
+    Array.from(repOptions).forEach((option, index) => {
+        if (index === selectedIndex) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+}
 
-elements.setButton.addEventListener('click', saveSet);
-elements.resetButton.addEventListener('click', resetWeight);
-elements.deleteButton.addEventListener('click', deleteLastSet);
+function handlePickerTouchStart(e) {
+    state.isDragging = true;
+    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
+    state.currentY = state.startY;
+    state.pickerOffset = parseInt(elements.repPicker.style.transform.replace('translateY(', '').replace('px)', '')) || 75;
+}
 
-elements.exerciseSelect.addEventListener('change', (e) => {
-    if (state.currentExercise !== e.target.value) resetWeight();
-    state.currentExercise = e.target.value;
-    updateSetsLabel();
-});
+function handlePickerTouchMove(e) {
+    if (!state.isDragging) return;
+    
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = y - state.currentY;
+    state.currentY = y;
+    
+    state.pickerOffset += deltaY;
+    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    
+    // Highlight closest rep
+    const repOptions = elements.repPicker.children;
+    const containerRect = elements.pickerContainer.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    
+    let closestRep = null;
+    let minDistance = Infinity;
+    
+    Array.from(repOptions).forEach((option, index) => {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        const distance = Math.abs(optionCenterY - centerY);
+        
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestRep = index + 1;
+        }
+        
+        option.classList.toggle('selected', distance < 15);
+    });
+    
+    if (closestRep) {
+        state.selectedReps = closestRep;
+    }
+}
+
+function handlePickerTouchEnd() {
+    state.isDragging = false;
+    updateSelectedRep(state.selectedReps);
+}
+
+// Event Listeners
+function setupEventListeners() {
+    // Navigation
+    elements.buttons.home.forEach(btn => {
+        btn.addEventListener('click', () => showScreen('home'));
+    });
+    
+    elements.buttons.barbell.addEventListener('click', () => showScreen('barbell'));
+    elements.buttons.dumbbell.addEventListener('click', () => alert('Dumbbell tracker coming soon!'));
+    
+    // Barbell controls
+    elements.plateButtons.forEach(btn => {
+        btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
+    });
+    
+    elements.setButton.addEventListener('click', showRepPicker);
+    elements.resetButton.addEventListener('click', resetWeight);
+    elements.deleteButton.addEventListener('click', deleteLastSet);
+    
+    elements.exerciseSelect.addEventListener('change', (e) => {
+        if (state.currentExercise !== e.target.value) resetWeight();
+        state.currentExercise = e.target.value;
+        updateSetsLabel();
+    });
+    
+    // Rep picker
+    elements.cancelReps.addEventListener('click', () => {
+        elements.repPickerModal.style.display = 'none';
+    });
+    
+    elements.confirmReps.addEventListener('click', () => {
+        elements.repPickerModal.style.display = 'none';
+        saveSetWithReps(state.selectedReps);
+    });
+    
+    // Picker touch events
+    elements.pickerContainer.addEventListener('touchstart', handlePickerTouchStart);
+    elements.pickerContainer.addEventListener('touchmove', handlePickerTouchStart);
+    elements.pickerContainer.addEventListener('touchend', handlePickerTouchEnd);
+    elements.pickerContainer.addEventListener('mousedown', handlePickerTouchStart);
+    elements.pickerContainer.addEventListener('mousemove', handlePickerTouchMove);
+    elements.pickerContainer.addEventListener('mouseup', handlePickerTouchEnd);
+    elements.pickerContainer.addEventListener('mouseleave', handlePickerTouchEnd);
+}
 
 // Handle iPhone home bar
 document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
+
+// Start the app
+init();
