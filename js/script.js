@@ -8,105 +8,144 @@ const state = {
     currentPlates: [],
     selectedReps: 5,
     isDragging: false,
-    startY: 0,
-    currentY: 0,
-    pickerOffset: 75, // Start centered on 5 reps (75px offset)
-    velocity: 0,
-    lastTime: 0,
-    animationFrame: null,
-    currentRepPosition: 5 // Track current rep position
+    pickerOffset: 75, // Default position for 5 reps
+    velocity: 0
 };
 
-// [Previous DOM elements and init code remains exactly the same until the touch handlers]
+// DOM elements
+const elements = {
+    screens: {
+        home: document.getElementById('home-screen'),
+        barbell: document.getElementById('barbell-screen')
+    },
+    buttons: {
+        home: document.querySelectorAll('.home-button'),
+        barbell: document.getElementById('barbell-button'),
+        dumbbell: document.getElementById('dumbbell-button')
+    },
+    totalWeight: document.getElementById('total-weight-label'),
+    setsLabel: document.getElementById('sets-label'),
+    leftPlates: document.getElementById('left-plates'),
+    rightPlates: document.getElementById('right-plates'),
+    setButton: document.getElementById('set-button'),
+    resetButton: document.getElementById('reset-weight-button'),
+    deleteButton: document.getElementById('delete-last-button'),
+    plateButtons: document.querySelectorAll('.plate-button'),
+    exerciseSelect: document.getElementById('exercise-select'),
+    timerDisplay: document.getElementById('rest-timer'),
+    repPicker: document.getElementById('rep-picker'),
+    repPickerModal: document.getElementById('rep-picker-modal'),
+    cancelReps: document.getElementById('cancel-reps'),
+    confirmReps: document.getElementById('confirm-reps'),
+    pickerContainer: document.querySelector('.picker-container')
+};
 
-// Updated Touch/Mouse Handlers
-function handleTouchStart(e) {
-    cancelAnimationFrame(state.animationFrame);
-    state.isDragging = true;
-    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
-    state.currentY = state.startY;
-    state.lastTime = Date.now();
-    state.velocity = 0;
-    
-    // Store current transform position
-    const transform = elements.repPicker.style.transform;
-    if (transform) {
-        const match = transform.match(/translateY\(([-\d.]+)px\)/);
-        if (match) state.pickerOffset = parseFloat(match[1]);
-    }
-    
-    elements.repPicker.style.transition = 'none';
-    e.preventDefault();
+// Initialize the app
+function init() {
+    // Make sure barbell screen is accessible
+    setupNavigation();
+    setupBarbellFunctionality();
+    setupRepPicker();
+    updateTotalWeight();
+    updateSetsLabel();
+    startRestTimer();
 }
 
-function handleTouchMove(e) {
-    if (!state.isDragging) return;
+// Navigation setup
+function setupNavigation() {
+    // Home button
+    elements.buttons.home.forEach(btn => {
+        btn.addEventListener('click', () => showScreen('home'));
+    });
     
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const now = Date.now();
-    const deltaTime = now - state.lastTime;
+    // Barbell button - THIS IS THE CRUCIAL FIX
+    elements.buttons.barbell.addEventListener('click', () => {
+        showScreen('barbell');
+        resetWeight(); // Reset plates when entering
+    });
     
-    if (deltaTime > 0) {
-        const deltaY = y - state.currentY;
-        state.velocity = deltaY / deltaTime * 800; // Movement speed
-        state.lastTime = now;
-    }
-    
-    state.pickerOffset += (y - state.currentY) * 0.6; // Sensitivity
-    state.currentY = y;
-    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-    highlightClosestRep();
-    e.preventDefault();
+    // Dumbbell button
+    elements.buttons.dumbbell.addEventListener('click', () => {
+        alert('Dumbbell tracker coming soon!');
+    });
 }
 
-function handleTouchEnd() {
-    if (!state.isDragging) return;
-    state.isDragging = false;
-    
-    // Apply momentum only if significant velocity
-    if (Math.abs(state.velocity) > 20) {
-        const startOffset = state.pickerOffset;
-        const momentumDistance = state.velocity * 0.15;
-        const duration = 500;
-        
-        let startTime = null;
-        
-        function animateMomentum(timestamp) {
-            if (!startTime) startTime = timestamp;
-            const elapsed = timestamp - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            state.pickerOffset = startOffset + momentumDistance * easeProgress;
-            elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-            
-            if (progress < 1) {
-                state.animationFrame = requestAnimationFrame(animateMomentum);
-                highlightClosestRep();
-            } else {
-                snapToNearestRep();
-            }
-        }
-        
-        state.animationFrame = requestAnimationFrame(animateMomentum);
-    } else {
-        snapToNearestRep();
-    }
+function showScreen(screenName) {
+    // Hide all screens
+    Object.values(elements.screens).forEach(screen => {
+        screen.classList.remove('active');
+    });
+    // Show requested screen
+    elements.screens[screenName].classList.add('active');
 }
 
-// [Rest of the code (highlightClosestRep, snapToNearestRep, etc.) remains exactly the same]
+// Barbell functionality
+function setupBarbellFunctionality() {
+    // Plate buttons
+    elements.plateButtons.forEach(btn => {
+        btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
+    });
+    
+    // Control buttons
+    elements.setButton.addEventListener('click', showRepPicker);
+    elements.resetButton.addEventListener('click', resetWeight);
+    elements.deleteButton.addEventListener('click', deleteLastSet);
+    
+    // Exercise selection
+    elements.exerciseSelect.addEventListener('change', (e) => {
+        if (state.currentExercise !== e.target.value) resetWeight();
+        state.currentExercise = e.target.value;
+        updateSetsLabel();
+    });
+}
 
-// Update the updateSelectedRep function to maintain position:
+// [Keep all your existing functions like addPlate, renderPlates, resetWeight, 
+// saveSetWithReps, deleteLastSet, updateTotalWeight, updateSetsLabel,
+// startRestTimer, resetRestTimer exactly as they were in previous versions]
+
+// Rep Picker Functions (simplified working version)
+function setupRepPicker() {
+    // Create rep options (1-20)
+    for (let i = 1; i <= 20; i++) {
+        const repOption = document.createElement('div');
+        repOption.textContent = i;
+        repOption.dataset.value = i;
+        elements.repPicker.appendChild(repOption);
+    }
+    
+    // Picker controls
+    elements.cancelReps.addEventListener('click', () => {
+        elements.repPickerModal.style.display = 'none';
+    });
+    
+    elements.confirmReps.addEventListener('click', () => {
+        elements.repPickerModal.style.display = 'none';
+        saveSetWithReps(state.selectedReps);
+    });
+    
+    // Touch events
+    elements.pickerContainer.addEventListener('touchstart', handleTouchStart);
+    elements.pickerContainer.addEventListener('touchmove', handleTouchMove);
+    elements.pickerContainer.addEventListener('touchend', handleTouchEnd);
+    
+    // Mouse events for desktop
+    elements.pickerContainer.addEventListener('mousedown', handleTouchStart);
+    elements.pickerContainer.addEventListener('mousemove', handleTouchMove);
+    elements.pickerContainer.addEventListener('mouseup', handleTouchEnd);
+}
+
+function showRepPicker() {
+    elements.repPickerModal.style.display = 'flex';
+    updateSelectedRep(state.selectedReps);
+}
+
 function updateSelectedRep(rep) {
     const repOptions = elements.repPicker.children;
     const selectedIndex = rep - 1;
-    state.selectedReps = rep;
-    state.currentRepPosition = rep;
-    
-    // Calculate new offset based on current position
     state.pickerOffset = 75 - (selectedIndex * 30);
+    state.selectedReps = rep;
     
-    elements.repPicker.style.transition = 'transform 0.4s ease-out';
+    elements.repPicker.style.transition = 'transform 0.3s ease-out';
     elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
     
     // Highlight selected rep
@@ -114,3 +153,11 @@ function updateSelectedRep(rep) {
         option.classList.toggle('selected', index === selectedIndex);
     });
 }
+
+// [Keep your existing touch handlers handleTouchStart, handleTouchMove, handleTouchEnd]
+
+// Start the app
+init();
+
+// Handle iPhone home bar
+document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
