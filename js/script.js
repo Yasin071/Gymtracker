@@ -143,9 +143,7 @@ function resetRestTimer() {
     elements.timerDisplay.textContent = "Rest: 0:00";
 }
 
-// Replace JUST the rep picker related functions in your script.js with these:
-
-// Rep Picker Functions
+// Slower Rep Picker Functions
 function setupRepPicker() {
     // Create rep options (1-20)
     for (let i = 1; i <= 20; i++) {
@@ -168,7 +166,7 @@ function updateSelectedRep(rep) {
     const offset = 75 - (selectedIndex * 30);
     
     state.pickerOffset = offset;
-    elements.repPicker.style.transition = 'transform 0.4s cubic-bezier(0.2, 0, 0, 1)';
+    elements.repPicker.style.transition = 'transform 0.5s cubic-bezier(0.2, 0, 0, 1)';
     elements.repPicker.style.transform = `translateY(${offset}px)`;
     state.selectedReps = rep;
     
@@ -178,7 +176,6 @@ function updateSelectedRep(rep) {
     });
 }
 
-// Slower touch handling
 function handleTouchStart(e) {
     state.isDragging = true;
     state.startY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -198,14 +195,12 @@ function handleTouchMove(e) {
     
     if (deltaTime > 0) {
         const deltaY = y - state.lastY;
-        // Reduced velocity multiplier for slower movement
-        state.velocity = deltaY / deltaTime * 500; // reduced from 1000
+        state.velocity = deltaY / deltaTime * 500; // Slower velocity
         state.lastY = y;
         state.lastTime = now;
     }
     
-    // Reduced movement sensitivity
-    state.pickerOffset += (y - state.currentY) * 0.8; // reduced from 1.5
+    state.pickerOffset += (y - state.currentY) * 0.7; // Reduced sensitivity
     state.currentY = y;
     elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
     highlightClosestRep();
@@ -216,94 +211,9 @@ function handleTouchEnd() {
     if (!state.isDragging) return;
     state.isDragging = false;
     
-    // Slower momentum
-    const momentumDuration = 500; // increased from 300
+    const momentumDuration = 600; // Longer momentum
     const startOffset = state.pickerOffset;
-    const endOffset = startOffset + state.velocity * 0.1; // reduced from 0.3
-    
-    let startTime = null;
-    
-    function momentumAnimation(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const progress = timestamp - startTime;
-        const percentage = Math.min(progress / momentumDuration, 1);
-        
-        // Eased movement
-        state.pickerOffset = startOffset + (endOffset - startOffset) * Math.sin(percentage * Math.PI/2);
-        elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-        
-        if (progress < momentumDuration) {
-            requestAnimationFrame(momentumAnimation);
-        } else {
-            snapToNearestRep();
-        }
-    }
-    
-    requestAnimationFrame(momentumAnimation);
-}
-
-function animatePicker() {
-    if (!state.isDragging && Math.abs(state.velocity) > 5) { // increased threshold from 10
-        // Heavier deceleration
-        state.pickerOffset += state.velocity * 0.01; // reduced from 0.03
-        state.velocity *= 0.85; // increased friction from 0.95
-        elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-        highlightClosestRep();
-        
-        if (Math.abs(state.velocity) < 5) { // increased threshold from 10
-            snapToNearestRep();
-        }
-    }
-    requestAnimationFrame(animatePicker);
-}
-
-// Keep all other functions (highlightClosestRep, snapToNearestRep, etc.) exactly the same
-    
-    // Highlight selected rep
-    Array.from(repOptions).forEach((option, index) => {
-        option.classList.toggle('selected', index === selectedIndex);
-    });
-}
-
-// Animation and touch handling
-function handleTouchStart(e) {
-    state.isDragging = true;
-    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
-    state.lastY = state.startY;
-    state.lastTime = Date.now();
-    elements.repPicker.style.transition = 'none';
-    e.preventDefault();
-}
-
-function handleTouchMove(e) {
-    if (!state.isDragging) return;
-    
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const now = Date.now();
-    const deltaTime = now - state.lastTime;
-    
-    if (deltaTime > 0) {
-        const deltaY = y - state.lastY;
-        state.velocity = deltaY / deltaTime * 1000; // pixels per second
-        state.lastY = y;
-        state.lastTime = now;
-    }
-    
-    state.pickerOffset += (y - state.currentY) * 1.5;
-    state.currentY = y;
-    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-    highlightClosestRep();
-    e.preventDefault();
-}
-
-function handleTouchEnd() {
-    if (!state.isDragging) return;
-    state.isDragging = false;
-    
-    // Apply momentum
-    const momentumDuration = 300;
-    const startOffset = state.pickerOffset;
-    const endOffset = startOffset + state.velocity * 0.3;
+    const endOffset = startOffset + state.velocity * 0.08; // Reduced momentum
     
     let startTime = null;
     
@@ -362,13 +272,13 @@ function snapToNearestRep() {
 }
 
 function animatePicker() {
-    if (!state.isDragging && Math.abs(state.velocity) > 10) {
-        state.pickerOffset += state.velocity * 0.03;
-        state.velocity *= 0.95;
+    if (!state.isDragging && Math.abs(state.velocity) > 3) {
+        state.pickerOffset += state.velocity * 0.008; // Slower movement
+        state.velocity *= 0.82; // Faster deceleration
         elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
         highlightClosestRep();
         
-        if (Math.abs(state.velocity) < 10) {
+        if (Math.abs(state.velocity) < 3) {
             snapToNearestRep();
         }
     }
