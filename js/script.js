@@ -10,7 +10,10 @@ const state = {
     isDragging: false,
     startY: 0,
     currentY: 0,
-    pickerOffset: 0
+    pickerOffset: 0,
+    velocity: 0,
+    lastY: 0,
+    lastTime: 0
 };
 
 // DOM elements
@@ -49,6 +52,7 @@ function init() {
     startRestTimer();
     setupEventListeners();
     setupRepPicker();
+    requestAnimationFrame(animatePicker);
 }
 
 // Navigation functions
@@ -148,8 +152,6 @@ function setupRepPicker() {
         repOption.dataset.value = i;
         elements.repPicker.appendChild(repOption);
     }
-    
-    // Set initial selected rep
     updateSelectedRep(5);
 }
 
@@ -163,37 +165,90 @@ function updateSelectedRep(rep) {
     const selectedIndex = rep - 1;
     const offset = 75 - (selectedIndex * 30);
     
+    state.pickerOffset = offset;
+    elements.repPicker.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
     elements.repPicker.style.transform = `translateY(${offset}px)`;
     state.selectedReps = rep;
     
-    // Update visual selection
+    // Highlight selected rep
     Array.from(repOptions).forEach((option, index) => {
-        if (index === selectedIndex) {
-            option.classList.add('selected');
-        } else {
-            option.classList.remove('selected');
-        }
+        option.classList.toggle('selected', index === selectedIndex);
     });
 }
 
-function handlePickerTouchStart(e) {
+// Animation and touch handling
+function handleTouchStart(e) {
     state.isDragging = true;
     state.startY = e.touches ? e.touches[0].clientY : e.clientY;
-    state.currentY = state.startY;
-    state.pickerOffset = parseInt(elements.repPicker.style.transform.replace('translateY(', '').replace('px)', '')) || 75;
+    state.lastY = state.startY;
+    state.lastTime = Date.now();
+    elements.repPicker.style.transition = 'none';
+    e.preventDefault();
 }
 
-function handlePickerTouchMove(e) {
+function handleTouchMove(e) {
     if (!state.isDragging) return;
     
     const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const deltaY = y - state.currentY;
+    const now = Date.now();
+    const deltaTime = now - state.lastTime;
+    
+    if (deltaTime > 0) {
+        const deltaY = y - state.lastY;
+        state.velocity = deltaY / deltaTime * 1000; // pixels per second
+        state.lastY = y;
+        state.lastTime = now;
+    }
+    
+    state.pickerOffset += (y - state.currentY) * 1.5;
     state.currentY = y;
-    
-    state.pickerOffset += deltaY;
     elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    highlightClosestRep();
+    e.preventDefault();
+}
+
+function handleTouchEnd() {
+    if (!state.isDragging) return;
+    state.isDragging = false;
     
-    // Highlight closest rep
+    // Apply momentum
+    const momentumDuration = 300;
+    const startOffset = state.pickerOffset;
+    const endOffset = startOffset + state.velocity * 0.3;
+    
+    let startTime = null;
+    
+    function momentumAnimation(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = timestamp - startTime;
+        const percentage = Math.min(progress / momentumDuration, 1);
+        
+        state.pickerOffset = startOffset + (endOffset - startOffset) * Math.sin(percentage * Math.PI/2);
+        elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+        
+        if (progress < momentumDuration) {
+            requestAnimationFrame(momentumAnimation);
+        } else {
+            snapToNearestRep();
+        }
+    }
+    
+    requestAnimationFrame(momentumAnimation);
+}
+
+function highlightClosestRep() {
+    const repOptions = elements.repPicker.children;
+    const containerRect = elements.pickerContainer.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    
+    Array.from(repOptions).forEach(option => {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        option.classList.toggle('selected', Math.abs(optionCenterY - centerY) < 15);
+    });
+}
+
+function snapToNearestRep() {
     const repOptions = elements.repPicker.children;
     const containerRect = elements.pickerContainer.getBoundingClientRect();
     const centerY = containerRect.top + containerRect.height / 2;
@@ -210,18 +265,25 @@ function handlePickerTouchMove(e) {
             minDistance = distance;
             closestRep = index + 1;
         }
-        
-        option.classList.toggle('selected', distance < 15);
     });
     
     if (closestRep) {
-        state.selectedReps = closestRep;
+        updateSelectedRep(closestRep);
     }
 }
 
-function handlePickerTouchEnd() {
-    state.isDragging = false;
-    updateSelectedRep(state.selectedReps);
+function animatePicker() {
+    if (!state.isDragging && Math.abs(state.velocity) > 10) {
+        state.pickerOffset += state.velocity * 0.03;
+        state.velocity *= 0.95;
+        elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+        highlightClosestRep();
+        
+        if (Math.abs(state.velocity) < 10) {
+            snapToNearestRep();
+        }
+    }
+    requestAnimationFrame(animatePicker);
 }
 
 // Event Listeners
@@ -259,14 +321,16 @@ function setupEventListeners() {
         saveSetWithReps(state.selectedReps);
     });
     
-    // Picker touch events
-    elements.pickerContainer.addEventListener('touchstart', handlePickerTouchStart);
-    elements.pickerContainer.addEventListener('touchmove', handlePickerTouchStart);
-    elements.pickerContainer.addEventListener('touchend', handlePickerTouchEnd);
-    elements.pickerContainer.addEventListener('mousedown', handlePickerTouchStart);
-    elements.pickerContainer.addEventListener('mousemove', handlePickerTouchMove);
-    elements.pickerContainer.addEventListener('mouseup', handlePickerTouchEnd);
-    elements.pickerContainer.addEventListener('mouseleave', handlePickerTouchEnd);
+    // Touch events
+    elements.pickerContainer.addEventListener('touchstart', handleTouchStart);
+    elements.pickerContainer.addEventListener('touchmove', handleTouchMove);
+    elements.pickerContainer.addEventListener('touchend', handleTouchEnd);
+    
+    // Mouse events for desktop
+    elements.pickerContainer.addEventListener('mousedown', handleTouchStart);
+    elements.pickerContainer.addEventListener('mousemove', handleTouchMove);
+    elements.pickerContainer.addEventListener('mouseup', handleTouchEnd);
+    elements.pickerContainer.addEventListener('mouseleave', handleTouchEnd);
 }
 
 // Handle iPhone home bar
