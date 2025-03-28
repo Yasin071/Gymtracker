@@ -8,8 +8,11 @@ const state = {
     currentPlates: [],
     selectedReps: 5,
     isDragging: false,
+    startY: 0,
+    currentY: 0,
     pickerOffset: 75, // Default position for 5 reps
-    velocity: 0
+    velocity: 0,
+    lastTime: 0
 };
 
 // DOM elements
@@ -42,7 +45,6 @@ const elements = {
 
 // Initialize the app
 function init() {
-    // Make sure barbell screen is accessible
     setupNavigation();
     setupBarbellFunctionality();
     setupRepPicker();
@@ -58,10 +60,10 @@ function setupNavigation() {
         btn.addEventListener('click', () => showScreen('home'));
     });
     
-    // Barbell button - THIS IS THE CRUCIAL FIX
+    // Barbell button
     elements.buttons.barbell.addEventListener('click', () => {
         showScreen('barbell');
-        resetWeight(); // Reset plates when entering
+        resetWeight();
     });
     
     // Dumbbell button
@@ -71,11 +73,9 @@ function setupNavigation() {
 }
 
 function showScreen(screenName) {
-    // Hide all screens
     Object.values(elements.screens).forEach(screen => {
         screen.classList.remove('active');
     });
-    // Show requested screen
     elements.screens[screenName].classList.add('active');
 }
 
@@ -99,11 +99,87 @@ function setupBarbellFunctionality() {
     });
 }
 
-// [Keep all your existing functions like addPlate, renderPlates, resetWeight, 
-// saveSetWithReps, deleteLastSet, updateTotalWeight, updateSetsLabel,
-// startRestTimer, resetRestTimer exactly as they were in previous versions]
+// Core functions
+function addPlate(weight) {
+    state.currentPlates.push(weight);
+    renderPlates();
+    state.totalWeight += weight * 2;
+    updateTotalWeight();
+}
 
-// Rep Picker Functions (simplified working version)
+function renderPlates() {
+    elements.leftPlates.innerHTML = '';
+    elements.rightPlates.innerHTML = '';
+    
+    state.currentPlates.forEach(weight => {
+        const plate = document.createElement('div');
+        plate.className = 'plate';
+        plate.textContent = `${weight} kg`;
+        plate.dataset.weight = weight;
+        elements.leftPlates.appendChild(plate.cloneNode(true));
+        elements.rightPlates.appendChild(plate);
+    });
+}
+
+function resetWeight() {
+    state.currentPlates = [];
+    state.totalWeight = 20;
+    renderPlates();
+    updateTotalWeight();
+}
+
+function saveSetWithReps(reps) {
+    state.sets.push({
+        exercise: state.currentExercise,
+        weight: state.totalWeight,
+        reps: reps,
+        date: new Date().toISOString()
+    });
+    
+    localStorage.setItem('gym-sets', JSON.stringify(state.sets));
+    updateSetsLabel();
+    resetRestTimer();
+}
+
+function deleteLastSet() {
+    if (state.sets.length > 0) {
+        state.sets.pop();
+        localStorage.setItem('gym-sets', JSON.stringify(state.sets));
+        updateSetsLabel();
+    }
+}
+
+function updateTotalWeight() {
+    elements.totalWeight.textContent = `Total: ${state.totalWeight} kg`;
+}
+
+function updateSetsLabel() {
+    const exerciseSets = state.sets
+        .filter(set => set.exercise === state.currentExercise)
+        .slice(-3);
+    
+    elements.setsLabel.textContent = exerciseSets.length > 0
+        ? `${state.currentExercise.toUpperCase().replace('_', ' ')}:\n${exerciseSets.map(set => 
+            `${set.weight}kg × ${set.reps}`).join('\n')}`
+        : "No sets yet";
+}
+
+function startRestTimer() {
+    clearInterval(state.restTimer);
+    state.restTimer = setInterval(() => {
+        state.restSeconds++;
+        const mins = Math.floor(state.restSeconds / 60);
+        const secs = state.restSeconds % 60;
+        elements.timerDisplay.textContent = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }, 1000);
+}
+
+function resetRestTimer() {
+    state.restSeconds = 0;
+    elements.timerDisplay.textContent = "Rest: 0:00";
+}
+
+// Rep Picker Functions
 function setupRepPicker() {
     // Create rep options (1-20)
     for (let i = 1; i <= 20; i++) {
@@ -124,14 +200,15 @@ function setupRepPicker() {
     });
     
     // Touch events
-    elements.pickerContainer.addEventListener('touchstart', handleTouchStart);
-    elements.pickerContainer.addEventListener('touchmove', handleTouchMove);
+    elements.pickerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+    elements.pickerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     elements.pickerContainer.addEventListener('touchend', handleTouchEnd);
     
     // Mouse events for desktop
     elements.pickerContainer.addEventListener('mousedown', handleTouchStart);
     elements.pickerContainer.addEventListener('mousemove', handleTouchMove);
     elements.pickerContainer.addEventListener('mouseup', handleTouchEnd);
+    elements.pickerContainer.addEventListener('mouseleave', handleTouchEnd);
 }
 
 function showRepPicker() {
@@ -154,7 +231,117 @@ function updateSelectedRep(rep) {
     });
 }
 
-// [Keep your existing touch handlers handleTouchStart, handleTouchMove, handleTouchEnd]
+// Touch handlers
+function handleTouchStart(e) {
+    state.isDragging = true;
+    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
+    state.currentY = state.startY;
+    state.lastTime = Date.now();
+    state.velocity = 0;
+    
+    // Get current transform
+    const transform = window.getComputedStyle(elements.repPicker).getPropertyValue('transform');
+    if (transform && transform !== 'none') {
+        const matrix = transform.match(/^matrix\((.+)\)$/);
+        if (matrix) {
+            state.pickerOffset = parseFloat(matrix[1].split(', ')[5]) || 75;
+        }
+    }
+    
+    elements.repPicker.style.transition = 'none';
+    e.preventDefault();
+}
+
+function handleTouchMove(e) {
+    if (!state.isDragging) return;
+    
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const now = Date.now();
+    const deltaTime = now - state.lastTime;
+    
+    if (deltaTime > 0) {
+        const deltaY = y - state.currentY;
+        state.velocity = deltaY / deltaTime * 800;
+        state.lastTime = now;
+    }
+    
+    state.pickerOffset += (y - state.currentY) * 0.8;
+    state.currentY = y;
+    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    highlightClosestRep();
+    e.preventDefault();
+}
+
+function handleTouchEnd() {
+    if (!state.isDragging) return;
+    state.isDragging = false;
+    
+    // Apply momentum if significant velocity
+    if (Math.abs(state.velocity) > 50) {
+        const startOffset = state.pickerOffset;
+        const momentumDistance = state.velocity * 0.15;
+        const duration = 400;
+        
+        let startTime = null;
+        
+        function animateMomentum(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            state.pickerOffset = startOffset + momentumDistance * easeProgress;
+            elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateMomentum);
+                highlightClosestRep();
+            } else {
+                snapToNearestRep();
+            }
+        }
+        
+        requestAnimationFrame(animateMomentum);
+    } else {
+        snapToNearestRep();
+    }
+}
+
+function highlightClosestRep() {
+    const repOptions = elements.repPicker.children;
+    const containerRect = elements.pickerContainer.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    
+    Array.from(repOptions).forEach(option => {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        option.classList.toggle('selected', Math.abs(optionCenterY - centerY) < 15);
+    });
+}
+
+function snapToNearestRep() {
+    const repOptions = elements.repPicker.children;
+    const containerRect = elements.pickerContainer.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    
+    let closestRep = null;
+    let minDistance = Infinity;
+    
+    Array.from(repOptions).forEach((option, index) => {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        const distance = Math.abs(optionCenterY - centerY);
+        
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestRep = index + 1;
+        }
+    });
+    
+    if (closestRep) {
+        updateSelectedRep(closestRep);
+    }
+}
 
 // Start the app
 init();
