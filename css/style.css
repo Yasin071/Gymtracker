@@ -389,3 +389,47 @@ button[data-weight="20"], .plate[data-weight="20"],
     min-width: 80px;
     text-align: center;
 }
+
+/* Dumbbell Weight Picker Controls */
+.dumbbell-picker-controls {
+    margin: 0 auto 20px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.weight-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    justify-items: center;
+}
+
+.weight-controls-grid .weight-display {
+    grid-column: 1 / -1;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.weight-controls-grid button {
+    padding: 12px 0;
+    width: 100%;
+    font-size: 1rem;
+    border-radius: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.weight-controls-grid button:active {
+    transform: scale(0.95);
+}
+
+.weight-controls-grid button:nth-child(1) { order: 1; } /* -5kg */
+.weight-controls-grid button:nth-child(2) { order: 2; } /* -2.5kg */
+.weight-controls-grid .weight-display { order: 3; }
+.weight-controls-grid button:nth-child(4) { order: 4; } /* +2.5kg */
+.weight-controls-grid button:nth-child(5) { order: 5; } /* +5kg */
