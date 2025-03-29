@@ -406,9 +406,7 @@ function updateSelectedDumbbellWeight(weight) {
     });
 }
 
-// ... (keep all previous code until setupPickerInteraction function)
-
-// Common Picker Functionality
+// Common Picker Functionality - IMPROVED VERSION
 function setupPickerInteraction(pickerElement, onSelectCallback) {
     let isDragging = false;
     let startY = 0;
@@ -441,6 +439,9 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
             const matrix = transform.match(/^matrix\((.+)\)$/);
             if (matrix) {
                 pickerOffset = parseFloat(matrix[1].split(', ')[5]) || centerOffset;
+                // Calculate selectedIndex based on current position
+                selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
+                selectedIndex = Math.max(0, Math.min(options.length - 1, selectedIndex));
             }
         }
         
@@ -462,7 +463,7 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
         const containerRect = elements.pickerContainer.getBoundingClientRect();
         const centerY = containerRect.top + containerRect.height / 2;
         
-        let closestIndex = 0;
+        let closestIndex = selectedIndex;
         let minDistance = Infinity;
         
         options.forEach((option, index) => {
@@ -476,7 +477,7 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
             }
         });
         
-        // Only update selection if we found a closer option
+        // Update selection if we found a closer option
         if (closestIndex !== selectedIndex) {
             selectedIndex = closestIndex;
             highlightSelectedOption();
@@ -489,14 +490,34 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
         if (!isDragging) return;
         isDragging = false;
         
-        // Snap to the selected option
-        pickerOffset = centerOffset - (selectedIndex * optionHeight);
-        pickerElement.style.transition = 'transform 0.2s ease-out';
-        pickerElement.style.transform = `translateY(${pickerOffset}px)`;
+        // Calculate final selected index based on current position
+        const containerRect = elements.pickerContainer.getBoundingClientRect();
+        const centerY = containerRect.top + containerRect.height / 2;
+        
+        let finalSelectedIndex = 0;
+        let minDistance = Infinity;
+        
+        options.forEach((option, index) => {
+            const optionRect = option.getBoundingClientRect();
+            const optionCenterY = optionRect.top + optionRect.height / 2;
+            const distance = Math.abs(optionCenterY - centerY);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                finalSelectedIndex = index;
+            }
+        });
+        
+        selectedIndex = finalSelectedIndex;
+        highlightSelectedOption();
         
         // Update the selected value
         const selectedValue = parseFloat(options[selectedIndex].dataset.value);
         onSelectCallback(selectedValue);
+        
+        // Keep the picker at its current visual position
+        // Only update the selection internally
+        pickerElement.style.transition = 'transform 0.2s ease-out';
     }
 
     function updatePickerPosition() {
@@ -512,8 +533,6 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
         });
     }
 }
-
-// ... (keep all remaining code exactly the same)
 
 // Start the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', init);
