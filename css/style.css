@@ -28,7 +28,6 @@ body {
     position: relative;
 }
 
-/* Header with home button */
 .header {
     background-color: #333;
     color: white;
@@ -79,7 +78,7 @@ body {
 }
 
 /* Barbell Screen */
-.barbell-section {
+.barbell-section, .dumbbell-section {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -95,7 +94,7 @@ body {
     color: white;
 }
 
-.barbell-visual-container {
+.barbell-visual-container, .dumbbell-visual-container {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -112,6 +111,15 @@ body {
     width: 100%;
     max-width: 300px;
     position: relative;
+}
+
+.dumbbell-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    max-width: 300px;
 }
 
 .plate-column {
@@ -142,6 +150,24 @@ body {
     bottom: 0;
     z-index: 2;
     border-radius: 3px;
+}
+
+.dumbbell {
+    width: 80px;
+    height: 120px;
+    background-color: #333;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    border: 3px solid #444;
+}
+
+.dumbbell:hover {
+    transform: scale(1.05);
 }
 
 .plate {
@@ -197,6 +223,7 @@ button {
     border-radius: 5px;
     flex: 1;
     font-weight: bold;
+    cursor: pointer;
 }
 
 .timer {
@@ -209,7 +236,7 @@ button {
     margin: 5px 0;
 }
 
-.plate-buttons {
+.plate-buttons, .dumbbell-quick-weights {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
@@ -217,26 +244,39 @@ button {
 }
 
 /* Color coding */
-button[data-weight="5"], .plate[data-weight="5"] { 
+button[data-weight="5"], .plate[data-weight="5"],
+.dumbbell-weight-button[data-weight="5"] { 
     background-color: #FF9800;
     border: 1px solid #e68a00;
 }
-button[data-weight="10"], .plate[data-weight="10"] { 
+button[data-weight="10"], .plate[data-weight="10"],
+.dumbbell-weight-button[data-weight="10"] { 
     background-color: #2196F3;
     border: 1px solid #1a81d6;
 }
-button[data-weight="15"], .plate[data-weight="15"] { 
+button[data-weight="15"], .plate[data-weight="15"],
+.dumbbell-weight-button[data-weight="15"] { 
     background-color: #9C27B0;
     border: 1px solid #822099;
 }
-button[data-weight="20"], .plate[data-weight="20"] { 
+button[data-weight="20"], .plate[data-weight="20"],
+.dumbbell-weight-button[data-weight="20"] { 
     background-color: #F44336;
     border: 1px solid #d32f2f;
 }
 
-#set-button { background-color: #4CAF50; border: 1px solid #3e8e41; }
-#reset-weight-button { background-color: #f44336; border: 1px solid #d32f2f; }
-#delete-last-button { background-color: #FF9800; border: 1px solid #e68a00; }
+#set-button, #dumbbell-set-button { 
+    background-color: #4CAF50; 
+    border: 1px solid #3e8e41; 
+}
+#reset-weight-button, #dumbbell-reset-button { 
+    background-color: #f44336; 
+    border: 1px solid #d32f2f; 
+}
+#delete-last-button, #dumbbell-delete-button { 
+    background-color: #FF9800; 
+    border: 1px solid #e68a00; 
+}
 
 /* Screen management */
 .screen {
@@ -318,54 +358,10 @@ button[data-weight="20"], .plate[data-weight="20"] {
     font-size: 1rem;
 }
 
-#cancel-reps {
+#cancel-reps, #cancel-dumbbell {
     background-color: #f44336;
 }
 
-#confirm-reps {
+#confirm-reps, #confirm-dumbbell {
     background-color: #4CAF50;
-}
-/* Dumbbell Screen Styles */
-.dumbbell-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-.dumbbell-visual-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 0;
-    padding: 10px;
-}
-
-.dumbbell-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    height: 150px;
-    width: 100%;
-    max-width: 300px;
-}
-
-.dumbbell {
-    width: 80px;
-    height: 120px;
-    background-color: #333;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    border: 3px solid #444;
-}
-
-.dumbbell:hover {
-    transform: scale(1.05);
 }
