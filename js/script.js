@@ -357,10 +357,10 @@ function updateSelectedRep(rep) {
     });
 }
 
-// Dumbbell Weight Picker
+// Dumbbell Weight Picker (with 2.5kg increments)
 function setupDumbbellWeightPicker() {
-    // Create weight options (1kg to 50kg in 1kg increments)
-    for (let i = 1; i <= 50; i++) {
+    // Create weight options (2.5kg to 50kg in 2.5kg increments)
+    for (let i = 2.5; i <= 50; i += 2.5) {
         const weightOption = document.createElement('div');
         weightOption.textContent = `${i}kg`;
         weightOption.dataset.value = i;
@@ -391,7 +391,7 @@ function showDumbbellWeightPicker() {
 
 function updateSelectedDumbbellWeight(weight) {
     const weightOptions = elements.dumbbellWeightPicker.children;
-    const selectedIndex = weight - 1;
+    const selectedIndex = (weight / 2.5) - 1; // Calculate index based on 2.5kg increments
     const optionHeight = 30;
     const centerOffset = 75;
     
@@ -406,7 +406,7 @@ function updateSelectedDumbbellWeight(weight) {
     });
 }
 
-// Common Picker Functionality - IMPROVED VERSION
+// Common Picker Functionality
 function setupPickerInteraction(pickerElement, onSelectCallback) {
     let isDragging = false;
     let startY = 0;
@@ -439,8 +439,13 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
             const matrix = transform.match(/^matrix\((.+)\)$/);
             if (matrix) {
                 pickerOffset = parseFloat(matrix[1].split(', ')[5]) || centerOffset;
-                // Calculate selectedIndex based on current position
-                selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
+                // For dumbbell picker, calculate index based on 2.5kg increments
+                if (pickerElement === elements.dumbbellWeightPicker) {
+                    selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
+                } else {
+                    // Regular calculation for rep picker
+                    selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
+                }
                 selectedIndex = Math.max(0, Math.min(options.length - 1, selectedIndex));
             }
         }
@@ -516,7 +521,6 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
         onSelectCallback(selectedValue);
         
         // Keep the picker at its current visual position
-        // Only update the selection internally
         pickerElement.style.transition = 'transform 0.2s ease-out';
     }
 
