@@ -17,12 +17,7 @@ const state = {
     
     // Picker state
     selectedReps: 5,
-    selectedWeight: 5,
-    isDragging: false,
-    startY: 0,
-    currentY: 0,
-    pickerOffset: 75,
-    activePicker: null // 'reps' or 'dumbbell'
+    selectedWeight: 5
 };
 
 // DOM elements
@@ -93,6 +88,10 @@ function init() {
     // Start timers
     startRestTimer();
     startDumbbellRestTimer();
+    
+    // Initialize pickers
+    updateSelectedRep(5);
+    updateSelectedDumbbellWeight(5);
 }
 
 // Navigation setup
@@ -323,25 +322,21 @@ function setupRepPicker() {
     
     elements.confirmReps.addEventListener('click', () => {
         elements.repPickerModal.style.display = 'none';
-        if (state.activePicker === 'barbell') {
+        if (elements.screens.barbell.classList.contains('active')) {
             saveSetWithReps(state.selectedReps);
         } else {
             saveDumbbellSetWithReps(state.selectedReps);
         }
     });
 
-    // Add event listeners for the rep picker
-    elements.repPicker.addEventListener('mousedown', handleTouchStart);
-    elements.repPicker.addEventListener('mousemove', handleTouchMove);
-    elements.repPicker.addEventListener('mouseup', handleTouchEnd);
-    elements.repPicker.addEventListener('mouseleave', handleTouchEnd);
-    elements.repPicker.addEventListener('touchstart', handleTouchStart);
-    elements.repPicker.addEventListener('touchmove', handleTouchMove);
-    elements.repPicker.addEventListener('touchend', handleTouchEnd);
+    // Setup picker interaction
+    setupPickerInteraction(elements.repPicker, (value) => {
+        state.selectedReps = value;
+        updateSelectedRep(value);
+    });
 }
 
 function showRepPicker() {
-    state.activePicker = elements.screens.barbell.classList.contains('active') ? 'barbell' : 'dumbbell';
     elements.repPickerModal.style.display = 'flex';
     updateSelectedRep(state.selectedReps);
 }
@@ -349,11 +344,13 @@ function showRepPicker() {
 function updateSelectedRep(rep) {
     const repOptions = elements.repPicker.children;
     const selectedIndex = rep - 1;
-    state.pickerOffset = 75 - (selectedIndex * 30);
-    state.selectedReps = rep;
+    const optionHeight = 30;
+    const centerOffset = 75;
     
-    elements.repPicker.style.transition = 'transform 0.3s ease-out';
-    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    const pickerOffset = centerOffset - (selectedIndex * optionHeight);
+    
+    elements.repPicker.style.transition = 'transform 0.2s ease-out';
+    elements.repPicker.style.transform = `translateY(${pickerOffset}px)`;
     
     // Highlight selected rep
     Array.from(repOptions).forEach((option, index) => {
@@ -363,8 +360,8 @@ function updateSelectedRep(rep) {
 
 // Dumbbell Weight Picker
 function setupDumbbellWeightPicker() {
-    // Create weight options (2.5kg to 50kg in 2.5kg increments)
-    for (let i = 2.5; i <= 50; i += 2.5) {
+    // Create weight options (1kg to 50kg in 1kg increments)
+    for (let i = 1; i <= 50; i++) {
         const weightOption = document.createElement('div');
         weightOption.textContent = `${i}kg`;
         weightOption.dataset.value = i;
@@ -378,18 +375,15 @@ function setupDumbbellWeightPicker() {
     
     elements.confirmDumbbell.addEventListener('click', () => {
         elements.dumbbellPickerModal.style.display = 'none';
-        state.dumbbellWeight = parseFloat(state.selectedWeight || state.dumbbellWeight);
+        state.dumbbellWeight = state.selectedWeight;
         updateDumbbellWeight();
     });
 
-    // Add event listeners for the dumbbell weight picker
-    elements.dumbbellWeightPicker.addEventListener('mousedown', handleTouchStart);
-    elements.dumbbellWeightPicker.addEventListener('mousemove', handleTouchMove);
-    elements.dumbbellWeightPicker.addEventListener('mouseup', handleTouchEnd);
-    elements.dumbbellWeightPicker.addEventListener('mouseleave', handleTouchEnd);
-    elements.dumbbellWeightPicker.addEventListener('touchstart', handleTouchStart);
-    elements.dumbbellWeightPicker.addEventListener('touchmove', handleTouchMove);
-    elements.dumbbellWeightPicker.addEventListener('touchend', handleTouchEnd);
+    // Setup picker interaction
+    setupPickerInteraction(elements.dumbbellWeightPicker, (value) => {
+        state.selectedWeight = value;
+        updateSelectedDumbbellWeight(value);
+    });
 }
 
 function showDumbbellWeightPicker() {
@@ -399,12 +393,14 @@ function showDumbbellWeightPicker() {
 
 function updateSelectedDumbbellWeight(weight) {
     const weightOptions = elements.dumbbellWeightPicker.children;
-    const selectedIndex = (weight / 2.5) - 1;
-    state.pickerOffset = 75 - (selectedIndex * 30);
-    state.selectedWeight = weight;
+    const selectedIndex = weight - 1;
+    const optionHeight = 30;
+    const centerOffset = 75;
     
-    elements.dumbbellWeightPicker.style.transition = 'transform 0.3s ease-out';
-    elements.dumbbellWeightPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    const pickerOffset = centerOffset - (selectedIndex * optionHeight);
+    
+    elements.dumbbellWeightPicker.style.transition = 'transform 0.2s ease-out';
+    elements.dumbbellWeightPicker.style.transform = `translateY(${pickerOffset}px)`;
     
     // Highlight selected weight
     Array.from(weightOptions).forEach((option, index) => {
@@ -412,94 +408,99 @@ function updateSelectedDumbbellWeight(weight) {
     });
 }
 
-// Common Picker Handlers
-function handleTouchStart(e) {
-    state.isDragging = true;
-    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
-    state.currentY = state.startY;
-    
-    // Get current transform
-    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
-    const transform = window.getComputedStyle(picker).getPropertyValue('transform');
-    if (transform && transform !== 'none') {
-        const matrix = transform.match(/^matrix\((.+)\)$/);
-        if (matrix) {
-            state.pickerOffset = parseFloat(matrix[1].split(', ')[5]) || 75;
-        }
-    }
-    
-    picker.style.transition = 'none';
-    e.preventDefault();
-}
+// Common Picker Functionality
+function setupPickerInteraction(pickerElement, onSelectCallback) {
+    let isDragging = false;
+    let startY = 0;
+    let currentY = 0;
+    let pickerOffset = 75;
+    const optionHeight = 30;
+    const centerOffset = 75;
 
-function handleTouchMove(e) {
-    if (!state.isDragging) return;
-    
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const deltaY = y - state.currentY;
-    state.currentY = y;
-    
-    // Move the picker
-    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
-    state.pickerOffset += deltaY * 0.8;
-    picker.style.transform = `translateY(${state.pickerOffset}px)`;
-    
-    // Highlight closest value
-    highlightClosestValue();
-    e.preventDefault();
-}
+    // Touch/mouse events
+    pickerElement.addEventListener('mousedown', handleStart);
+    pickerElement.addEventListener('touchstart', handleStart, { passive: false });
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
 
-function handleTouchEnd() {
-    if (!state.isDragging) return;
-    state.isDragging = false;
-    
-    // Snap to closest value
-    const closestValue = getClosestValue();
-    if (closestValue !== null) {
-        if (state.activePicker === 'dumbbell') {
-            state.selectedWeight = closestValue;
-            updateSelectedDumbbellWeight(closestValue);
-        } else {
-            state.selectedReps = closestValue;
-            updateSelectedRep(closestValue);
-        }
-    }
-}
-
-function highlightClosestValue() {
-    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
-    const options = picker.children;
-    const containerRect = elements.pickerContainer.getBoundingClientRect();
-    const centerY = containerRect.top + containerRect.height / 2;
-    
-    Array.from(options).forEach(option => {
-        const optionRect = option.getBoundingClientRect();
-        const optionCenterY = optionRect.top + optionRect.height / 2;
-        option.classList.toggle('selected', Math.abs(optionCenterY - centerY) < 15);
-    });
-}
-
-function getClosestValue() {
-    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
-    const options = picker.children;
-    const containerRect = elements.pickerContainer.getBoundingClientRect();
-    const centerY = containerRect.top + containerRect.height / 2;
-    
-    let closestValue = null;
-    let minDistance = Infinity;
-    
-    Array.from(options).forEach(option => {
-        const optionRect = option.getBoundingClientRect();
-        const optionCenterY = optionRect.top + optionRect.height / 2;
-        const distance = Math.abs(optionCenterY - centerY);
+    function handleStart(e) {
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        currentY = startY;
         
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestValue = parseFloat(option.dataset.value);
+        // Get current transform
+        const transform = window.getComputedStyle(pickerElement).getPropertyValue('transform');
+        if (transform && transform !== 'none') {
+            const matrix = transform.match(/^matrix\((.+)\)$/);
+            if (matrix) {
+                pickerOffset = parseFloat(matrix[1].split(', ')[5]) || centerOffset;
+            }
         }
-    });
-    
-    return closestValue;
+        
+        pickerElement.style.transition = 'none';
+        e.preventDefault();
+    }
+
+    function handleMove(e) {
+        if (!isDragging) return;
+        
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = y - currentY;
+        currentY = y;
+        
+        pickerOffset += deltaY;
+        pickerElement.style.transform = `translateY(${pickerOffset}px)`;
+        
+        highlightClosestValue();
+        e.preventDefault();
+    }
+
+    function handleEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        // Snap to closest value
+        const closestValue = getClosestValue();
+        if (closestValue !== null) {
+            onSelectCallback(closestValue);
+        }
+    }
+
+    function highlightClosestValue() {
+        const options = pickerElement.children;
+        const containerRect = elements.pickerContainer.getBoundingClientRect();
+        const centerY = containerRect.top + containerRect.height / 2;
+        
+        Array.from(options).forEach(option => {
+            const optionRect = option.getBoundingClientRect();
+            const optionCenterY = optionRect.top + optionRect.height / 2;
+            option.classList.toggle('selected', Math.abs(optionCenterY - centerY) < 15);
+        });
+    }
+
+    function getClosestValue() {
+        const options = pickerElement.children;
+        const containerRect = elements.pickerContainer.getBoundingClientRect();
+        const centerY = containerRect.top + containerRect.height / 2;
+        
+        let closestValue = null;
+        let minDistance = Infinity;
+        
+        Array.from(options).forEach(option => {
+            const optionRect = option.getBoundingClientRect();
+            const optionCenterY = optionRect.top + optionRect.height / 2;
+            const distance = Math.abs(optionCenterY - centerY);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestValue = parseFloat(option.dataset.value);
+            }
+        });
+        
+        return closestValue;
+    }
 }
 
 // Start the app when DOM is loaded
