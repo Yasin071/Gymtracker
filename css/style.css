@@ -1,213 +1,292 @@
-/* Base styles */
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 body {
-    background-color: #f5f5f5;
-    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #000;
+    color: white;
+    height: 100vh;
+    height: calc(100vh - env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-.screen {
-    display: none;
-    padding: 20px;
-    max-width: 500px;
+.screen-manager {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px;
     margin: 0 auto;
-}
-
-.screen.active {
-    display: block;
+    background-color: #111;
+    overflow: hidden;
+    position: relative;
 }
 
 .header {
+    background-color: #333;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
     display: flex;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
-}
-
-.header h2 {
-    margin-left: 10px;
+    position: relative;
 }
 
 .home-button {
+    position: absolute;
+    right: 15px;
     background: none;
     border: none;
-    font-size: 1.2rem;
-    color: #007AFF;
-    cursor: pointer;
-    padding: 5px 10px;
-}
-
-/* Home screen */
-#home-screen {
-    text-align: center;
-    padding-top: 50px;
-}
-
-#home-screen h1 {
-    margin-bottom: 40px;
-    font-size: 2.5rem;
-}
-
-#home-screen .home-button {
-    display: block;
-    width: 200px;
-    margin: 20px auto;
-    padding: 15px;
-    background-color: #007AFF;
     color: white;
-    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Home Screen */
+.home-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 20px;
+}
+
+.equipment-button {
+    width: 150px;
+    height: 150px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #333;
+    border: 2px solid #444;
+    cursor: pointer;
+    font-weight: bold;
     font-size: 1.2rem;
 }
 
-/* Weight display */
-.weight-display {
+/* Barbell Screen */
+.barbell-section, .dumbbell-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.total-weight {
     text-align: center;
-    margin-bottom: 20px;
-}
-
-#total-weight-label, #dumbbell-weight-label {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: bold;
-    margin-bottom: 5px;
+    padding: 10px;
+    background-color: #333;
+    color: white;
 }
 
-#sets-label, #dumbbell-sets-label {
-    font-size: 1rem;
-    color: #666;
-    white-space: pre-line;
-    min-height: 60px;
-}
-
-/* Barbell styles */
-.barbell {
+.barbell-visual-container, .dumbbell-visual-container {
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 30px 0;
-    height: 60px;
+    min-height: 0;
+    padding: 10px;
 }
 
-.bar {
-    width: 120px;
-    height: 10px;
-    background-color: #333;
-    border-radius: 5px;
+.barbell-visual {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 150px;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
 }
 
-.plates {
+.dumbbell-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.plate-column {
+    width: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    justify-content: flex-end;
+    height: 100%;
+    position: absolute;
+    bottom: 0;
 }
 
-.plate {
+.left-plates {
+    left: calc(50% - 80px);
+}
+
+.right-plates {
+    left: calc(50% + 20px);
+}
+
+.barbell-sleeve {
     width: 50px;
-    height: 30px;
-    background-color: #007AFF;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 5px;
-    font-size: 0.8rem;
-}
-
-/* Dumbbell styles */
-.dumbbells {
-    display: flex;
-    justify-content: space-around;
-    margin: 30px 0;
+    height: 60px;
+    background-color: #333;
+    position: absolute;
+    left: calc(50% - 25px);
+    bottom: 0;
+    z-index: 2;
+    border-radius: 3px;
 }
 
 .dumbbell {
     width: 80px;
-    height: 80px;
-    background-color: #007AFF;
-    color: white;
+    height: 120px;
+    background-color: #333;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    font-weight: bold;
     cursor: pointer;
+    border: 3px solid #444;
 }
 
-/* Plate and weight buttons */
-.plate-buttons, .dumbbell-weight-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
+.dumbbell:hover {
+    transform: scale(1.05);
 }
 
-.plate-button, .dumbbell-weight-button {
-    padding: 12px 15px;
-    background-color: #007AFF;
+.plate {
     color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    text-align: center;
+    min-width: 45px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin: 2px 0;
+    position: relative;
 }
 
-/* Controls */
+.sets-display {
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    white-space: pre-line;
+    max-height: 80px;
+    overflow-y: auto;
+    background-color: #111;
+}
+
 .controls {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    padding: 10px;
+    background-color: #222;
 }
 
 select {
-    padding: 10px;
-    font-size: 1rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #333;
+    color: white;
+    font-size: 0.9rem;
 }
 
-#rest-timer, #dumbbell-rest-timer {
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.action-buttons {
+.button-row {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
+    margin: 5px 0;
 }
 
-.action-buttons button {
-    flex: 1;
-    padding: 15px;
-    font-size: 1rem;
+button {
+    color: white;
     border: none;
-    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    flex: 1;
+    font-weight: bold;
     cursor: pointer;
 }
 
-#set-button, #dumbbell-set-button {
-    background-color: #4CAF50;
+.timer {
+    text-align: center;
+    font-size: 1rem;
+    padding: 8px;
+    background-color: #333;
     color: white;
+    border-radius: 5px;
+    margin: 5px 0;
 }
 
-#reset-weight-button, #dumbbell-reset-button {
-    background-color: #f39c12;
-    color: white;
+.plate-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 8px;
 }
 
-#delete-last-button, #dumbbell-delete-button {
-    background-color: #e74c3c;
-    color: white;
+/* Color coding */
+button[data-weight="5"], .plate[data-weight="5"] { 
+    background-color: #FF9800;
+    border: 1px solid #e68a00;
+}
+button[data-weight="10"], .plate[data-weight="10"] { 
+    background-color: #2196F3;
+    border: 1px solid #1a81d6;
+}
+button[data-weight="15"], .plate[data-weight="15"] { 
+    background-color: #9C27B0;
+    border: 1px solid #822099;
+}
+button[data-weight="20"], .plate[data-weight="20"] { 
+    background-color: #F44336;
+    border: 1px solid #d32f2f;
 }
 
-/* Modal styles */
+#set-button, #dumbbell-set-button { 
+    background-color: #4CAF50; 
+    border: 1px solid #3e8e41; 
+}
+#reset-weight-button, #dumbbell-reset-button { 
+    background-color: #f44336; 
+    border: 1px solid #d32f2f; 
+}
+#delete-last-button, #dumbbell-delete-button { 
+    background-color: #FF9800; 
+    border: 1px solid #e68a00; 
+}
+
+/* Screen management */
+.screen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    width: 100%;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* Picker Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -215,25 +294,23 @@ select {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0,0,0,0.7);
+    z-index: 100;
     justify-content: center;
     align-items: center;
-    z-index: 100;
 }
 
 .modal-content {
-    background-color: white;
+    background-color: #222;
     padding: 20px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 400px;
-    max-height: 80vh;
-    overflow: auto;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
 }
 
 .modal h3 {
-    text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .picker-container {
@@ -241,81 +318,46 @@ select {
     overflow: hidden;
     position: relative;
     margin: 20px 0;
+    perspective: 500px;
 }
 
 .picker {
     display: flex;
     flex-direction: column;
     align-items: center;
-    transition: transform 0.2s ease-out;
+    transform-style: preserve-3d;
 }
 
 .picker div {
-    padding: 10px;
+    padding: 10px 0;
     font-size: 1.5rem;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    transition: all 0.2s;
 }
 
 .picker div.selected {
     font-weight: bold;
-    color: #007AFF;
-    font-size: 1.8rem;
+    color: #4CAF50;
+    transform: scale(1.1);
 }
 
 .modal-buttons {
     display: flex;
-    justify-content: space-between;
     gap: 10px;
 }
 
 .modal-buttons button {
     flex: 1;
-    padding: 12px;
-    border: none;
+    padding: 10px;
     border-radius: 8px;
     font-size: 1rem;
-    cursor: pointer;
 }
 
 #cancel-reps, #cancel-dumbbell {
-    background-color: #e74c3c;
-    color: white;
+    background-color: #f44336;
 }
 
 #confirm-reps, #confirm-dumbbell {
     background-color: #4CAF50;
-    color: white;
 }
-
-/* Dumbbell Weight Picker Controls */
-.dumbbell-picker-controls {
-    margin: 0 auto 20px;
-    width: 100%;
-    max-width: 320px;
-}
-
-.weight-controls-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 10px;
-    justify-items: center;
-}
-
-.weight-controls-grid .weight-display {
-    grid-column: 1 / -1;
-    font-size: 1.8rem;
-    font-weight: bold;
-    margin: 10px 0;
-}
-
-.weight-controls-grid button {
-    padding: 12px 0;
-    width: 100%;
-    font-size: 1rem;
-    border-radius: 8px;
-    background-color:
