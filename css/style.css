@@ -365,3 +365,27 @@ button[data-weight="20"], .plate[data-weight="20"],
 #confirm-reps, #confirm-dumbbell {
     background-color: #4CAF50;
 }
+
+.dumbbell-picker-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.dumbbell-picker-controls button {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.dumbbell-picker-controls .weight-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    min-width: 80px;
+    text-align: center;
+}
