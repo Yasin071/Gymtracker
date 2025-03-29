@@ -1,144 +1,180 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Tracker</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <!-- Home Screen -->
-    <div id="home-screen" class="screen active">
-        <h1>Gym Tracker</h1>
-        <button id="barbell-button" class="home-button">Barbell</button>
-        <button id="dumbbell-button" class="home-button">Dumbbell</button>
-    </div>
+// App state
+const state = {
+    totalWeight: 20,
+    currentExercise: "squat",
+    sets: JSON.parse(localStorage.getItem('gym-sets')) || [],
+    restTimer: null,
+    restSeconds: 0,
+    currentPlates: [],
+    dumbbellWeight: 5,
+    currentDumbbellExercise: "shoulder_press",
+    dumbbellSets: JSON.parse(localStorage.getItem('gym-dumbbell-sets')) || [],
+    dumbbellRestTimer: null,
+    dumbbellRestSeconds: 0,
+    selectedReps: 5,
+    selectedWeight: 5
+};
 
-    <!-- Barbell Screen -->
-    <div id="barbell-screen" class="screen">
-        <div class="header">
-            <button class="home-button">← Home</button>
-            <h2>Barbell</h2>
-        </div>
-        
-        <div class="content">
-            <div class="weight-display">
-                <div id="total-weight-label">Total: 20 kg</div>
-                <div id="sets-label">No sets yet</div>
-            </div>
-            
-            <div class="barbell">
-                <div id="left-plates" class="plates"></div>
-                <div class="bar"></div>
-                <div id="right-plates" class="plates"></div>
-            </div>
-            
-            <div class="plate-buttons">
-                <button class="plate-button" data-weight="25">25kg</button>
-                <button class="plate-button" data-weight="20">20kg</button>
-                <button class="plate-button" data-weight="15">15kg</button>
-                <button class="plate-button" data-weight="10">10kg</button>
-                <button class="plate-button" data-weight="5">5kg</button>
-                <button class="plate-button" data-weight="2.5">2.5kg</button>
-                <button class="plate-button" data-weight="1.25">1.25kg</button>
-            </div>
-            
-            <div class="controls">
-                <select id="exercise-select">
-                    <option value="squat">Squat</option>
-                    <option value="bench_press">Bench Press</option>
-                    <option value="deadlift">Deadlift</option>
-                    <option value="overhead_press">Overhead Press</option>
-                    <option value="barbell_row">Barbell Row</option>
-                </select>
-                
-                <div id="rest-timer">Rest: 0:00</div>
-                
-                <div class="action-buttons">
-                    <button id="set-button">Set</button>
-                    <button id="reset-weight-button">Reset</button>
-                    <button id="delete-last-button">Delete Last</button>
-                </div>
-            </div>
-        </div>
-    </div>
+// DOM elements
+const elements = {
+    screens: {
+        home: document.getElementById('home-screen'),
+        barbell: document.getElementById('barbell-screen'),
+        dumbbell: document.getElementById('dumbbell-screen')
+    },
+    buttons: {
+        home: document.querySelectorAll('.home-button'),
+        barbell: document.getElementById('barbell-button'),
+        dumbbell: document.getElementById('dumbbell-button')
+    },
+    totalWeight: document.getElementById('total-weight-label'),
+    setsLabel: document.getElementById('sets-label'),
+    leftPlates: document.getElementById('left-plates'),
+    rightPlates: document.getElementById('right-plates'),
+    setButton: document.getElementById('set-button'),
+    resetButton: document.getElementById('reset-weight-button'),
+    deleteButton: document.getElementById('delete-last-button'),
+    plateButtons: document.querySelectorAll('.plate-button'),
+    exerciseSelect: document.getElementById('exercise-select'),
+    timerDisplay: document.getElementById('rest-timer'),
+    dumbbellWeightLabel: document.getElementById('dumbbell-weight-label'),
+    dumbbellSetsLabel: document.getElementById('dumbbell-sets-label'),
+    leftDumbbell: document.getElementById('left-dumbbell'),
+    rightDumbbell: document.getElementById('right-dumbbell'),
+    dumbbellSetButton: document.getElementById('dumbbell-set-button'),
+    dumbbellResetButton: document.getElementById('dumbbell-reset-button'),
+    dumbbellDeleteButton: document.getElementById('dumbbell-delete-button'),
+    dumbbellExerciseSelect: document.getElementById('dumbbell-exercise-select'),
+    dumbbellTimerDisplay: document.getElementById('dumbbell-rest-timer'),
+    dumbbellWeightButtons: document.querySelectorAll('.dumbbell-weight-button'),
+    repPicker: document.getElementById('rep-picker'),
+    repPickerModal: document.getElementById('rep-picker-modal'),
+    cancelReps: document.getElementById('cancel-reps'),
+    confirmReps: document.getElementById('confirm-reps'),
+    dumbbellWeightPicker: document.getElementById('dumbbell-weight-picker'),
+    dumbbellPickerModal: document.getElementById('dumbbell-picker-modal'),
+    cancelDumbbell: document.getElementById('cancel-dumbbell'),
+    confirmDumbbell: document.getElementById('confirm-dumbbell'),
+    pickerContainer: document.querySelector('.picker-container')
+};
 
-    <!-- Dumbbell Screen -->
-    <div id="dumbbell-screen" class="screen">
-        <div class="header">
-            <button class="home-button">← Home</button>
-            <h2>Dumbbell</h2>
-        </div>
-        
-        <div class="content">
-            <div class="weight-display">
-                <div id="dumbbell-weight-label">Weight: 5 kg (each)</div>
-                <div id="dumbbell-sets-label">No sets yet</div>
-            </div>
-            
-            <div class="dumbbells">
-                <div id="left-dumbbell" class="dumbbell">5kg</div>
-                <div id="right-dumbbell" class="dumbbell">5kg</div>
-            </div>
-            
-            <div class="dumbbell-weight-buttons">
-                <button class="dumbbell-weight-button" data-weight="5">5kg</button>
-                <button class="dumbbell-weight-button" data-weight="7.5">7.5kg</button>
-                <button class="dumbbell-weight-button" data-weight="10">10kg</button>
-                <button class="dumbbell-weight-button" data-weight="12.5">12.5kg</button>
-                <button class="dumbbell-weight-button" data-weight="15">15kg</button>
-                <button class="dumbbell-weight-button" data-weight="17.5">17.5kg</button>
-                <button class="dumbbell-weight-button" data-weight="20">20kg</button>
-            </div>
-            
-            <div class="controls">
-                <select id="dumbbell-exercise-select">
-                    <option value="shoulder_press">Shoulder Press</option>
-                    <option value="bicep_curl">Bicep Curl</option>
-                    <option value="lateral_raise">Lateral Raise</option>
-                    <option value="tricep_extension">Tricep Extension</option>
-                    <option value="goblet_squat">Goblet Squat</option>
-                </select>
-                
-                <div id="dumbbell-rest-timer">Rest: 0:00</div>
-                
-                <div class="action-buttons">
-                    <button id="dumbbell-set-button">Set</button>
-                    <button id="dumbbell-reset-button">Reset</button>
-                    <button id="dumbbell-delete-button">Delete Last</button>
-                </div>
-            </div>
-        </div>
-    </div>
+// Initialize the app
+function init() {
+    setupNavigation();
+    setupBarbellFunctionality();
+    setupDumbbellFunctionality();
+    setupRepPicker();
+    setupDumbbellWeightPicker();
+    
+    updateTotalWeight();
+    updateSetsLabel();
+    updateDumbbellWeight();
+    updateDumbbellSetsLabel();
+    
+    startRestTimer();
+    startDumbbellRestTimer();
+    
+    updateSelectedRep(5);
+}
 
-    <!-- Rep Picker Modal -->
-    <div id="rep-picker-modal" class="modal">
-        <div class="modal-content">
-            <h3>Select Reps</h3>
-            <div class="picker-container">
-                <div id="rep-picker" class="picker"></div>
-            </div>
-            <div class="modal-buttons">
-                <button id="cancel-reps">Cancel</button>
-                <button id="confirm-reps">Confirm</button>
-            </div>
-        </div>
-    </div>
+// Navigation setup
+function setupNavigation() {
+    elements.buttons.home.forEach(btn => {
+        btn.addEventListener('click', () => showScreen('home'));
+    });
+    
+    elements.buttons.barbell.addEventListener('click', () => {
+        showScreen('barbell');
+        resetWeight();
+    });
+    
+    elements.buttons.dumbbell.addEventListener('click', () => {
+        showScreen('dumbbell');
+        resetDumbbellWeight();
+    });
+}
 
-    <!-- Dumbbell Weight Picker Modal -->
-    <div id="dumbbell-picker-modal" class="modal">
-        <div class="modal-content">
-            <h3>Adjust Weight</h3>
-            <div class="picker-container">
-                <div id="dumbbell-weight-picker" class="picker"></div>
-            </div>
-            <div class="modal-buttons">
-                <button id="cancel-dumbbell">Cancel</button>
-                <button id="confirm-dumbbell">Confirm</button>
-            </div>
-        </div>
-    </div>
+function showScreen(screenName) {
+    Object.values(elements.screens).forEach(screen => {
+        screen.classList.remove('active');
+    });
+    elements.screens[screenName].classList.add('active');
+}
 
-    <script src="script.js"></script>
-</body>
-</html>
+// Barbell functionality
+function setupBarbellFunctionality() {
+    elements.plateButtons.forEach(btn => {
+        btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
+    });
+    
+    elements.setButton.addEventListener('click', showRepPicker);
+    elements.resetButton.addEventListener('click', resetWeight);
+    elements.deleteButton.addEventListener('click', deleteLastSet);
+    
+    elements.exerciseSelect.addEventListener('change', (e) => {
+        if (state.currentExercise !== e.target.value) resetWeight();
+        state.currentExercise = e.target.value;
+        updateSetsLabel();
+    });
+}
+
+function addPlate(weight) {
+    state.currentPlates.push(weight);
+    renderPlates();
+    state.totalWeight += weight * 2;
+    updateTotalWeight();
+}
+
+function renderPlates() {
+    elements.leftPlates.innerHTML = '';
+    elements.rightPlates.innerHTML = '';
+    
+    state.currentPlates.forEach(weight => {
+        const plate = document.createElement('div');
+        plate.className = 'plate';
+        plate.textContent = `${weight} kg`;
+        plate.dataset.weight = weight;
+        elements.leftPlates.appendChild(plate.cloneNode(true));
+        elements.rightPlates.appendChild(plate);
+    });
+}
+
+function resetWeight() {
+    state.currentPlates = [];
+    state.totalWeight = 20;
+    renderPlates();
+    updateTotalWeight();
+}
+
+function saveSetWithReps(reps) {
+    state.sets.push({
+        exercise: state.currentExercise,
+        weight: state.totalWeight,
+        reps: reps,
+        date: new Date().toISOString()
+    });
+    
+    localStorage.setItem('gym-sets', JSON.stringify(state.sets));
+    updateSetsLabel();
+    resetRestTimer();
+}
+
+function deleteLastSet() {
+    if (state.sets.length > 0) {
+        state.sets.pop();
+        localStorage.setItem('gym-sets', JSON.stringify(state.sets));
+        updateSetsLabel();
+    }
+}
+
+function updateTotalWeight() {
+    elements.totalWeight.textContent = `Total: ${state.totalWeight} kg`;
+}
+
+function updateSetsLabel() {
+    const exerciseSets = state.sets
+        .filter(set => set.exercise === state.currentExercise)
+        .slice(-3);
+    
+    elements.setsLabel.textContent = exerciseSets.length > 0
+        ? `${state.currentExercise.toUpperCase().replace('_', ' '
