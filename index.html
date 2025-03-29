@@ -177,4 +177,220 @@ function updateSetsLabel() {
         .slice(-3);
     
     elements.setsLabel.textContent = exerciseSets.length > 0
-        ? `${state.currentExercise.toUpperCase().replace('_', ' '
+        ? `${state.currentExercise.toUpperCase().replace('_', ' ')}:\n${exerciseSets.map(set => 
+            `${set.weight}kg × ${set.reps}`).join('\n')}`
+        : "No sets yet";
+}
+
+function startRestTimer() {
+    clearInterval(state.restTimer);
+    state.restTimer = setInterval(() => {
+        state.restSeconds++;
+        const mins = Math.floor(state.restSeconds / 60);
+        const secs = state.restSeconds % 60;
+        elements.timerDisplay.textContent = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }, 1000);
+}
+
+function resetRestTimer() {
+    state.restSeconds = 0;
+    elements.timerDisplay.textContent = "Rest: 0:00";
+}
+
+// Dumbbell functionality
+function setupDumbbellFunctionality() {
+    elements.leftDumbbell.addEventListener('click', showDumbbellWeightPicker);
+    elements.rightDumbbell.addEventListener('click', showDumbbellWeightPicker);
+    
+    elements.dumbbellWeightButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.dumbbellWeight = parseFloat(btn.dataset.weight);
+            updateDumbbellWeight();
+        });
+    });
+    
+    elements.dumbbellSetButton.addEventListener('click', showRepPicker);
+    elements.dumbbellResetButton.addEventListener('click', resetDumbbellWeight);
+    elements.dumbbellDeleteButton.addEventListener('click', deleteLastDumbbellSet);
+    
+    elements.dumbbellExerciseSelect.addEventListener('change', (e) => {
+        if (state.currentDumbbellExercise !== e.target.value) resetDumbbellWeight();
+        state.currentDumbbellExercise = e.target.value;
+        updateDumbbellSetsLabel();
+    });
+}
+
+function updateDumbbellWeight() {
+    elements.dumbbellWeightLabel.textContent = `Weight: ${state.dumbbellWeight} kg (each)`;
+    elements.leftDumbbell.textContent = `${state.dumbbellWeight}kg`;
+    elements.rightDumbbell.textContent = `${state.dumbbellWeight}kg`;
+}
+
+function resetDumbbellWeight() {
+    state.dumbbellWeight = 5;
+    updateDumbbellWeight();
+}
+
+function saveDumbbellSetWithReps(reps) {
+    state.dumbbellSets.push({
+        exercise: state.currentDumbbellExercise,
+        weight: state.dumbbellWeight,
+        reps: reps,
+        date: new Date().toISOString()
+    });
+    
+    localStorage.setItem('gym-dumbbell-sets', JSON.stringify(state.dumbbellSets));
+    updateDumbbellSetsLabel();
+    resetDumbbellRestTimer();
+}
+
+function deleteLastDumbbellSet() {
+    if (state.dumbbellSets.length > 0) {
+        state.dumbbellSets.pop();
+        localStorage.setItem('gym-dumbbell-sets', JSON.stringify(state.dumbbellSets));
+        updateDumbbellSetsLabel();
+    }
+}
+
+function updateDumbbellSetsLabel() {
+    const exerciseSets = state.dumbbellSets
+        .filter(set => set.exercise === state.currentDumbbellExercise)
+        .slice(-3);
+    
+    elements.dumbbellSetsLabel.textContent = exerciseSets.length > 0
+        ? `${state.currentDumbbellExercise.toUpperCase().replace('_', ' ')}:\n${exerciseSets.map(set => 
+            `${set.weight}kg × ${set.reps}`).join('\n')}`
+        : "No sets yet";
+}
+
+function startDumbbellRestTimer() {
+    clearInterval(state.dumbbellRestTimer);
+    state.dumbbellRestTimer = setInterval(() => {
+        state.dumbbellRestSeconds++;
+        const mins = Math.floor(state.dumbbellRestSeconds / 60);
+        const secs = state.dumbbellRestSeconds % 60;
+        elements.dumbbellTimerDisplay.textContent = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }, 1000);
+}
+
+function resetDumbbellRestTimer() {
+    state.dumbbellRestSeconds = 0;
+    elements.dumbbellTimerDisplay.textContent = "Rest: 0:00";
+}
+
+// Rep Picker
+function setupRepPicker() {
+    for (let i = 1; i <= 20; i++) {
+        const repOption = document.createElement('div');
+        repOption.textContent = i;
+        repOption.dataset.value = i;
+        elements.repPicker.appendChild(repOption);
+    }
+    
+    elements.cancelReps.addEventListener('click', () => {
+        elements.repPickerModal.style.display = 'none';
+    });
+    
+    elements.confirmReps.addEventListener('click', () => {
+        elements.repPickerModal.style.display = 'none';
+        if (elements.screens.barbell.classList.contains('active')) {
+            saveSetWithReps(state.selectedReps);
+        } else {
+            saveDumbbellSetWithReps(state.selectedReps);
+        }
+    });
+
+    Array.from(elements.repPicker.children).forEach(option => {
+        option.addEventListener('click', () => {
+            state.selectedReps = parseInt(option.dataset.value);
+            updateSelectedRep(state.selectedReps);
+        });
+    });
+}
+
+function showRepPicker() {
+    elements.repPickerModal.style.display = 'flex';
+    updateSelectedRep(state.selectedReps);
+}
+
+function updateSelectedRep(rep) {
+    const repOptions = elements.repPicker.children;
+    const selectedIndex = rep - 1;
+    const optionHeight = 30;
+    const centerOffset = 75;
+    
+    const pickerOffset = centerOffset - (selectedIndex * optionHeight);
+    
+    elements.repPicker.style.transition = 'transform 0.2s ease-out';
+    elements.repPicker.style.transform = `translateY(${pickerOffset}px)`;
+    
+    Array.from(repOptions).forEach((option, index) => {
+        option.classList.toggle('selected', index === selectedIndex);
+    });
+}
+
+// Dumbbell Weight Picker with ±2.5kg and ±5kg buttons
+function setupDumbbellWeightPicker() {
+    elements.dumbbellPickerModal.innerHTML = `
+        <div class="modal-content">
+            <h3>Adjust Weight</h3>
+            <div class="dumbbell-picker-controls">
+                <div class="weight-controls-grid">
+                    <button class="decrement-5">-5kg</button>
+                    <button class="decrement-2.5">-2.5kg</button>
+                    <div class="weight-display">${state.dumbbellWeight}kg</div>
+                    <button class="increment-2.5">+2.5kg</button>
+                    <button class="increment-5">+5kg</button>
+                </div>
+            </div>
+            <div class="picker-container">
+                <div id="dumbbell-weight-picker" class="picker"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-dumbbell">Cancel</button>
+                <button id="confirm-dumbbell">Confirm</button>
+            </div>
+        </div>
+    `;
+
+    // Reassign modal elements after recreating the modal
+    elements.dumbbellPickerModal = document.getElementById('dumbbell-picker-modal');
+    elements.dumbbellWeightPicker = document.getElementById('dumbbell-weight-picker');
+    elements.cancelDumbbell = document.getElementById('cancel-dumbbell');
+    elements.confirmDumbbell = document.getElementById('confirm-dumbbell');
+
+    // Button handlers
+    elements.dumbbellPickerModal.querySelector('.increment-2.5').addEventListener('click', () => adjustDumbbellWeight(2.5));
+    elements.dumbbellPickerModal.querySelector('.decrement-2.5').addEventListener('click', () => adjustDumbbellWeight(-2.5));
+    elements.dumbbellPickerModal.querySelector('.increment-5').addEventListener('click', () => adjustDumbbellWeight(5));
+    elements.dumbbellPickerModal.querySelector('.decrement-5').addEventListener('click', () => adjustDumbbellWeight(-5));
+
+    elements.cancelDumbbell.addEventListener('click', () => {
+        elements.dumbbellPickerModal.style.display = 'none';
+    });
+    
+    elements.confirmDumbbell.addEventListener('click', () => {
+        elements.dumbbellPickerModal.style.display = 'none';
+        updateDumbbellWeight();
+    });
+}
+
+function showDumbbellWeightPicker() {
+    // Update the display before showing
+    elements.dumbbellPickerModal.querySelector('.weight-display').textContent = `${state.dumbbellWeight}kg`;
+    elements.dumbbellPickerModal.style.display = 'flex';
+}
+
+function adjustDumbbellWeight(change) {
+    const newWeight = parseFloat((state.dumbbellWeight + change).toFixed(1));
+    if (newWeight >= 2.5 && newWeight <= 50) {
+        state.dumbbellWeight = newWeight;
+        elements.dumbbellPickerModal.querySelector('.weight-display').textContent = `${newWeight}kg`;
+    }
+}
+
+// Start the app
+document.addEventListener('DOMContentLoaded', init);
+
+// Handle iPhone home bar
+document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
