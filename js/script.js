@@ -357,15 +357,23 @@ function updateSelectedRep(rep) {
     });
 }
 
-// Dumbbell Weight Picker (with 2.5kg increments)
+// Dumbbell Weight Picker (with working 2.5kg increments)
 function setupDumbbellWeightPicker() {
+    // Clear any existing options
+    elements.dumbbellWeightPicker.innerHTML = '';
+    
     // Create weight options (2.5kg to 50kg in 2.5kg increments)
+    const weights = [];
     for (let i = 2.5; i <= 50; i += 2.5) {
-        const weightOption = document.createElement('div');
-        weightOption.textContent = `${i}kg`;
-        weightOption.dataset.value = i;
-        elements.dumbbellWeightPicker.appendChild(weightOption);
+        weights.push(i);
     }
+    
+    weights.forEach(weight => {
+        const weightOption = document.createElement('div');
+        weightOption.textContent = `${weight}kg`;
+        weightOption.dataset.value = weight;
+        elements.dumbbellWeightPicker.appendChild(weightOption);
+    });
     
     // Picker controls
     elements.cancelDumbbell.addEventListener('click', () => {
@@ -378,9 +386,9 @@ function setupDumbbellWeightPicker() {
         updateDumbbellWeight();
     });
 
-    // Setup picker interaction
+    // Setup picker interaction with proper 2.5kg increment handling
     setupPickerInteraction(elements.dumbbellWeightPicker, (value) => {
-        state.selectedWeight = value;
+        state.selectedWeight = parseFloat(value);
     });
 }
 
@@ -391,7 +399,21 @@ function showDumbbellWeightPicker() {
 
 function updateSelectedDumbbellWeight(weight) {
     const weightOptions = elements.dumbbellWeightPicker.children;
-    const selectedIndex = (weight / 2.5) - 1; // Calculate index based on 2.5kg increments
+    const weights = Array.from(weightOptions).map(opt => parseFloat(opt.dataset.value));
+    
+    // Find the closest available weight
+    let closestIndex = 0;
+    let minDiff = Infinity;
+    
+    weights.forEach((w, index) => {
+        const diff = Math.abs(w - weight);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestIndex = index;
+        }
+    });
+    
+    const selectedIndex = closestIndex;
     const optionHeight = 30;
     const centerOffset = 75;
     
@@ -439,13 +461,7 @@ function setupPickerInteraction(pickerElement, onSelectCallback) {
             const matrix = transform.match(/^matrix\((.+)\)$/);
             if (matrix) {
                 pickerOffset = parseFloat(matrix[1].split(', ')[5]) || centerOffset;
-                // For dumbbell picker, calculate index based on 2.5kg increments
-                if (pickerElement === elements.dumbbellWeightPicker) {
-                    selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
-                } else {
-                    // Regular calculation for rep picker
-                    selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
-                }
+                selectedIndex = Math.round((centerOffset - pickerOffset) / optionHeight);
                 selectedIndex = Math.max(0, Math.min(options.length - 1, selectedIndex));
             }
         }
