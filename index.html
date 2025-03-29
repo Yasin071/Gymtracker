@@ -67,6 +67,47 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Dumbbell Screen -->
+        <div class="screen" id="dumbbell-screen">
+            <div class="header">
+                Dumbbell Tracker
+                <button class="home-button">Home</button>
+            </div>
+            <div class="dumbbell-section">
+                <div class="total-weight" id="dumbbell-weight-label">Weight: 5 kg (each)</div>
+                <div class="dumbbell-visual-container">
+                    <div class="dumbbell-visual">
+                        <div class="dumbbell" id="left-dumbbell">5kg</div>
+                        <div class="dumbbell" id="right-dumbbell">5kg</div>
+                    </div>
+                </div>
+                <div class="sets-display" id="dumbbell-sets-label">No sets yet</div>
+            </div>
+            <div class="controls">
+                <select id="dumbbell-exercise-select">
+                    <option value="shoulder_press">Shoulder Press</option>
+                    <option value="bicep_curl">Bicep Curl</option>
+                    <option value="tricep_extension">Tricep Extension</option>
+                    <option value="lateral_raise">Lateral Raise</option>
+                    <option value="chest_press">Chest Press</option>
+                </select>
+                <div class="button-row">
+                    <button id="dumbbell-set-button">💪 Save Set</button>
+                    <button id="dumbbell-reset-button">🔄 Reset Weight</button>
+                </div>
+                <div class="button-row">
+                    <button id="dumbbell-delete-button">❌ Delete Last Set</button>
+                </div>
+                <div class="timer" id="dumbbell-rest-timer">Rest: 0:00</div>
+                <div class="dumbbell-quick-weights">
+                    <button class="dumbbell-weight-button" data-weight="5">5 kg</button>
+                    <button class="dumbbell-weight-button" data-weight="10">10 kg</button>
+                    <button class="dumbbell-weight-button" data-weight="15">15 kg</button>
+                    <button class="dumbbell-weight-button" data-weight="20">20 kg</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Rep Picker Modal -->
@@ -83,54 +124,20 @@
         </div>
     </div>
 
-    <script src="js/script.js"></script>
-    <!-- Dumbbell Screen -->
-<div class="screen" id="dumbbell-screen">
-    <div class="header">
-        Dumbbell Tracker
-        <button class="home-button">Home</button>
-    </div>
-    <div class="dumbbell-section">
-        <div class="total-weight" id="dumbbell-weight-label">Weight: 5 kg (each)</div>
-        <div class="dumbbell-visual-container">
-            <div class="dumbbell-visual">
-                <div class="dumbbell" id="left-dumbbell">5kg</div>
-                <div class="dumbbell" id="right-dumbbell">5kg</div>
+    <!-- Dumbbell Weight Picker Modal -->
+    <div class="modal" id="dumbbell-picker-modal">
+        <div class="modal-content">
+            <h3>Select Dumbbell Weight</h3>
+            <div class="picker-container">
+                <div class="picker" id="dumbbell-weight-picker"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-dumbbell">Cancel</button>
+                <button id="confirm-dumbbell">Confirm</button>
             </div>
         </div>
-        <div class="sets-display" id="dumbbell-sets-label">No sets yet</div>
     </div>
-    <div class="controls">
-        <select id="dumbbell-exercise-select">
-            <option value="shoulder_press">Shoulder Press</option>
-            <option value="bicep_curl">Bicep Curl</option>
-            <option value="tricep_extension">Tricep Extension</option>
-            <option value="lateral_raise">Lateral Raise</option>
-            <option value="chest_press">Chest Press</option>
-        </select>
-        <div class="button-row">
-            <button id="dumbbell-set-button">💪 Save Set</button>
-            <button id="dumbbell-reset-button">🔄 Reset Weight</button>
-        </div>
-        <div class="button-row">
-            <button id="dumbbell-delete-button">❌ Delete Last Set</button>
-        </div>
-        <div class="timer" id="dumbbell-rest-timer">Rest: 0:00</div>
-    </div>
-</div>
 
-<!-- Dumbbell Weight Picker Modal -->
-<div class="modal" id="dumbbell-picker-modal">
-    <div class="modal-content">
-        <h3>Select Dumbbell Weight</h3>
-        <div class="picker-container">
-            <div class="picker" id="dumbbell-weight-picker"></div>
-        </div>
-        <div class="modal-buttons">
-            <button id="cancel-dumbbell">Cancel</button>
-            <button id="confirm-dumbbell">Confirm</button>
-        </div>
-    </div>
-</div>
+    <script src="js/script.js"></script>
 </body>
 </html>
