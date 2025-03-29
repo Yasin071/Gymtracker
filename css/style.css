@@ -325,3 +325,47 @@ button[data-weight="20"], .plate[data-weight="20"] {
 #confirm-reps {
     background-color: #4CAF50;
 }
+/* Dumbbell Screen Styles */
+.dumbbell-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.dumbbell-visual-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+    padding: 10px;
+}
+
+.dumbbell-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    height: 150px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.dumbbell {
+    width: 80px;
+    height: 120px;
+    background-color: #333;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    border: 3px solid #444;
+}
+
+.dumbbell:hover {
+    transform: scale(1.05);
+}
