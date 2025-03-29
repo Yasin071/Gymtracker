@@ -329,6 +329,15 @@ function setupRepPicker() {
             saveDumbbellSetWithReps(state.selectedReps);
         }
     });
+
+    // Add event listeners for the rep picker
+    elements.repPicker.addEventListener('mousedown', handleTouchStart);
+    elements.repPicker.addEventListener('mousemove', handleTouchMove);
+    elements.repPicker.addEventListener('mouseup', handleTouchEnd);
+    elements.repPicker.addEventListener('mouseleave', handleTouchEnd);
+    elements.repPicker.addEventListener('touchstart', handleTouchStart);
+    elements.repPicker.addEventListener('touchmove', handleTouchMove);
+    elements.repPicker.addEventListener('touchend', handleTouchEnd);
 }
 
 function showRepPicker() {
@@ -372,6 +381,15 @@ function setupDumbbellWeightPicker() {
         state.dumbbellWeight = parseFloat(state.selectedWeight || state.dumbbellWeight);
         updateDumbbellWeight();
     });
+
+    // Add event listeners for the dumbbell weight picker
+    elements.dumbbellWeightPicker.addEventListener('mousedown', handleTouchStart);
+    elements.dumbbellWeightPicker.addEventListener('mousemove', handleTouchMove);
+    elements.dumbbellWeightPicker.addEventListener('mouseup', handleTouchEnd);
+    elements.dumbbellWeightPicker.addEventListener('mouseleave', handleTouchEnd);
+    elements.dumbbellWeightPicker.addEventListener('touchstart', handleTouchStart);
+    elements.dumbbellWeightPicker.addEventListener('touchmove', handleTouchMove);
+    elements.dumbbellWeightPicker.addEventListener('touchend', handleTouchEnd);
 }
 
 function showDumbbellWeightPicker() {
