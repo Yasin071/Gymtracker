@@ -1,18 +1,27 @@
 // App state
 const state = {
+    // Barbell state
     totalWeight: 20,
     currentExercise: "squat",
     sets: JSON.parse(localStorage.getItem('gym-sets')) || [],
     restTimer: null,
     restSeconds: 0,
     currentPlates: [],
+    
+    // Dumbbell state
     dumbbellWeight: 5,
     currentDumbbellExercise: "shoulder_press",
     dumbbellSets: JSON.parse(localStorage.getItem('gym-dumbbell-sets')) || [],
     dumbbellRestTimer: null,
     dumbbellRestSeconds: 0,
+    
+    // Picker state
     selectedReps: 5,
-    selectedWeight: 5
+    isDragging: false,
+    startY: 0,
+    currentY: 0,
+    pickerOffset: 75,
+    activePicker: null // 'reps' or 'dumbbell'
 };
 
 // DOM elements
@@ -27,6 +36,8 @@ const elements = {
         barbell: document.getElementById('barbell-button'),
         dumbbell: document.getElementById('dumbbell-button')
     },
+    
+    // Barbell elements
     totalWeight: document.getElementById('total-weight-label'),
     setsLabel: document.getElementById('sets-label'),
     leftPlates: document.getElementById('left-plates'),
@@ -37,6 +48,8 @@ const elements = {
     plateButtons: document.querySelectorAll('.plate-button'),
     exerciseSelect: document.getElementById('exercise-select'),
     timerDisplay: document.getElementById('rest-timer'),
+    
+    // Dumbbell elements
     dumbbellWeightLabel: document.getElementById('dumbbell-weight-label'),
     dumbbellSetsLabel: document.getElementById('dumbbell-sets-label'),
     leftDumbbell: document.getElementById('left-dumbbell'),
@@ -46,15 +59,18 @@ const elements = {
     dumbbellDeleteButton: document.getElementById('dumbbell-delete-button'),
     dumbbellExerciseSelect: document.getElementById('dumbbell-exercise-select'),
     dumbbellTimerDisplay: document.getElementById('dumbbell-rest-timer'),
-    dumbbellWeightButtons: document.querySelectorAll('.dumbbell-weight-button'),
+    
+    // Pickers
     repPicker: document.getElementById('rep-picker'),
     repPickerModal: document.getElementById('rep-picker-modal'),
     cancelReps: document.getElementById('cancel-reps'),
     confirmReps: document.getElementById('confirm-reps'),
+    
     dumbbellWeightPicker: document.getElementById('dumbbell-weight-picker'),
     dumbbellPickerModal: document.getElementById('dumbbell-picker-modal'),
     cancelDumbbell: document.getElementById('cancel-dumbbell'),
     confirmDumbbell: document.getElementById('confirm-dumbbell'),
+    
     pickerContainer: document.querySelector('.picker-container')
 };
 
@@ -66,28 +82,31 @@ function init() {
     setupRepPicker();
     setupDumbbellWeightPicker();
     
+    // Initialize displays
     updateTotalWeight();
     updateSetsLabel();
     updateDumbbellWeight();
     updateDumbbellSetsLabel();
     
+    // Start timers
     startRestTimer();
     startDumbbellRestTimer();
-    
-    updateSelectedRep(5);
 }
 
 // Navigation setup
 function setupNavigation() {
+    // Home button
     elements.buttons.home.forEach(btn => {
         btn.addEventListener('click', () => showScreen('home'));
     });
     
+    // Barbell button
     elements.buttons.barbell.addEventListener('click', () => {
         showScreen('barbell');
         resetWeight();
     });
     
+    // Dumbbell button
     elements.buttons.dumbbell.addEventListener('click', () => {
         showScreen('dumbbell');
         resetDumbbellWeight();
@@ -103,14 +122,17 @@ function showScreen(screenName) {
 
 // Barbell functionality
 function setupBarbellFunctionality() {
+    // Plate buttons
     elements.plateButtons.forEach(btn => {
         btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
     });
     
+    // Control buttons
     elements.setButton.addEventListener('click', showRepPicker);
     elements.resetButton.addEventListener('click', resetWeight);
     elements.deleteButton.addEventListener('click', deleteLastSet);
     
+    // Exercise selection
     elements.exerciseSelect.addEventListener('change', (e) => {
         if (state.currentExercise !== e.target.value) resetWeight();
         state.currentExercise = e.target.value;
@@ -199,20 +221,16 @@ function resetRestTimer() {
 
 // Dumbbell functionality
 function setupDumbbellFunctionality() {
+    // Dumbbell click handlers
     elements.leftDumbbell.addEventListener('click', showDumbbellWeightPicker);
     elements.rightDumbbell.addEventListener('click', showDumbbellWeightPicker);
     
-    elements.dumbbellWeightButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.dumbbellWeight = parseFloat(btn.dataset.weight);
-            updateDumbbellWeight();
-        });
-    });
-    
+    // Control buttons
     elements.dumbbellSetButton.addEventListener('click', showRepPicker);
     elements.dumbbellResetButton.addEventListener('click', resetDumbbellWeight);
     elements.dumbbellDeleteButton.addEventListener('click', deleteLastDumbbellSet);
     
+    // Exercise selection
     elements.dumbbellExerciseSelect.addEventListener('change', (e) => {
         if (state.currentDumbbellExercise !== e.target.value) resetDumbbellWeight();
         state.currentDumbbellExercise = e.target.value;
@@ -280,6 +298,7 @@ function resetDumbbellRestTimer() {
 
 // Rep Picker
 function setupRepPicker() {
+    // Create rep options (1-20)
     for (let i = 1; i <= 20; i++) {
         const repOption = document.createElement('div');
         repOption.textContent = i;
@@ -287,28 +306,23 @@ function setupRepPicker() {
         elements.repPicker.appendChild(repOption);
     }
     
+    // Picker controls
     elements.cancelReps.addEventListener('click', () => {
         elements.repPickerModal.style.display = 'none';
     });
     
     elements.confirmReps.addEventListener('click', () => {
         elements.repPickerModal.style.display = 'none';
-        if (elements.screens.barbell.classList.contains('active')) {
+        if (state.activePicker === 'barbell') {
             saveSetWithReps(state.selectedReps);
         } else {
             saveDumbbellSetWithReps(state.selectedReps);
         }
     });
-
-    Array.from(elements.repPicker.children).forEach(option => {
-        option.addEventListener('click', () => {
-            state.selectedReps = parseInt(option.dataset.value);
-            updateSelectedRep(state.selectedReps);
-        });
-    });
 }
 
 function showRepPicker() {
+    state.activePicker = elements.screens.barbell.classList.contains('active') ? 'barbell' : 'dumbbell';
     elements.repPickerModal.style.display = 'flex';
     updateSelectedRep(state.selectedReps);
 }
@@ -316,65 +330,151 @@ function showRepPicker() {
 function updateSelectedRep(rep) {
     const repOptions = elements.repPicker.children;
     const selectedIndex = rep - 1;
-    const optionHeight = 30;
-    const centerOffset = 75;
+    state.pickerOffset = 75 - (selectedIndex * 30);
+    state.selectedReps = rep;
     
-    const pickerOffset = centerOffset - (selectedIndex * optionHeight);
+    elements.repPicker.style.transition = 'transform 0.3s ease-out';
+    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
     
-    elements.repPicker.style.transition = 'transform 0.2s ease-out';
-    elements.repPicker.style.transform = `translateY(${pickerOffset}px)`;
-    
+    // Highlight selected rep
     Array.from(repOptions).forEach((option, index) => {
         option.classList.toggle('selected', index === selectedIndex);
     });
 }
 
-// Dumbbell Weight Picker with ±2.5kg and ±5kg buttons
+// Dumbbell Weight Picker
 function setupDumbbellWeightPicker() {
-    elements.dumbbellWeightPicker.innerHTML = '';
+    // Create weight options (2.5kg to 50kg in 2.5kg increments)
+    for (let i = 2.5; i <= 50; i += 2.5) {
+        const weightOption = document.createElement('div');
+        weightOption.textContent = `${i}kg`;
+        weightOption.dataset.value = i;
+        elements.dumbbellWeightPicker.appendChild(weightOption);
+    }
     
-    const controls = document.createElement('div');
-    controls.className = 'dumbbell-picker-controls';
-    controls.innerHTML = `
-        <div class="weight-controls-grid">
-            <button class="decrement-5">-5kg</button>
-            <button class="decrement-2.5">-2.5kg</button>
-            <div class="weight-display">${state.dumbbellWeight}kg</div>
-            <button class="increment-2.5">+2.5kg</button>
-            <button class="increment-5">+5kg</button>
-        </div>
-    `;
-    
-    elements.dumbbellPickerModal.querySelector('.modal-content').insertBefore(
-        controls,
-        elements.dumbbellPickerModal.querySelector('.picker-container')
-    );
-
-    // Button handlers
-    elements.dumbbellPickerModal.querySelector('.increment-2.5').addEventListener('click', () => adjustDumbbellWeight(2.5));
-    elements.dumbbellPickerModal.querySelector('.decrement-2.5').addEventListener('click', () => adjustDumbbellWeight(-2.5));
-    elements.dumbbellPickerModal.querySelector('.increment-5').addEventListener('click', () => adjustDumbbellWeight(5));
-    elements.dumbbellPickerModal.querySelector('.decrement-5').addEventListener('click', () => adjustDumbbellWeight(-5));
-
+    // Picker controls
     elements.cancelDumbbell.addEventListener('click', () => {
         elements.dumbbellPickerModal.style.display = 'none';
     });
     
     elements.confirmDumbbell.addEventListener('click', () => {
         elements.dumbbellPickerModal.style.display = 'none';
+        state.dumbbellWeight = parseFloat(state.selectedWeight || state.dumbbellWeight);
         updateDumbbellWeight();
     });
 }
 
-function adjustDumbbellWeight(change) {
-    const newWeight = parseFloat((state.dumbbellWeight + change).toFixed(1));
-    if (newWeight >= 2.5 && newWeight <= 50) {
-        state.dumbbellWeight = newWeight;
-        elements.dumbbellPickerModal.querySelector('.weight-display').textContent = `${newWeight}kg`;
+function showDumbbellWeightPicker() {
+    elements.dumbbellPickerModal.style.display = 'flex';
+    updateSelectedDumbbellWeight(state.dumbbellWeight);
+}
+
+function updateSelectedDumbbellWeight(weight) {
+    const weightOptions = elements.dumbbellWeightPicker.children;
+    const selectedIndex = (weight / 2.5) - 1;
+    state.pickerOffset = 75 - (selectedIndex * 30);
+    state.selectedWeight = weight;
+    
+    elements.dumbbellWeightPicker.style.transition = 'transform 0.3s ease-out';
+    elements.dumbbellWeightPicker.style.transform = `translateY(${state.pickerOffset}px)`;
+    
+    // Highlight selected weight
+    Array.from(weightOptions).forEach((option, index) => {
+        option.classList.toggle('selected', index === selectedIndex);
+    });
+}
+
+// Common Picker Handlers
+function handleTouchStart(e) {
+    state.isDragging = true;
+    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
+    state.currentY = state.startY;
+    
+    // Get current transform
+    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
+    const transform = window.getComputedStyle(picker).getPropertyValue('transform');
+    if (transform && transform !== 'none') {
+        const matrix = transform.match(/^matrix\((.+)\)$/);
+        if (matrix) {
+            state.pickerOffset = parseFloat(matrix[1].split(', ')[5]) || 75;
+        }
+    }
+    
+    picker.style.transition = 'none';
+    e.preventDefault();
+}
+
+function handleTouchMove(e) {
+    if (!state.isDragging) return;
+    
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = y - state.currentY;
+    state.currentY = y;
+    
+    // Move the picker
+    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
+    state.pickerOffset += deltaY * 0.8;
+    picker.style.transform = `translateY(${state.pickerOffset}px)`;
+    
+    // Highlight closest value
+    highlightClosestValue();
+    e.preventDefault();
+}
+
+function handleTouchEnd() {
+    if (!state.isDragging) return;
+    state.isDragging = false;
+    
+    // Snap to closest value
+    const closestValue = getClosestValue();
+    if (closestValue !== null) {
+        if (state.activePicker === 'dumbbell') {
+            state.selectedWeight = closestValue;
+            updateSelectedDumbbellWeight(closestValue);
+        } else {
+            state.selectedReps = closestValue;
+            updateSelectedRep(closestValue);
+        }
     }
 }
 
-// Start the app
+function highlightClosestValue() {
+    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
+    const options = picker.children;
+    const containerRect = elements.pickerContainer.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    
+    Array.from(options).forEach(option => {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        option.classList.toggle('selected', Math.abs(optionCenterY - centerY) < 15);
+    });
+}
+
+function getClosestValue() {
+    const picker = state.activePicker === 'dumbbell' ? elements.dumbbellWeightPicker : elements.repPicker;
+    const options = picker.children;
+    const containerRect = elements.pickerContainer.getBoundingClientRect();
+    const centerY = containerRect.top + containerRect.height / 2;
+    
+    let closestValue = null;
+    let minDistance = Infinity;
+    
+    Array.from(options).forEach(option => {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        const distance = Math.abs(optionCenterY - centerY);
+        
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestValue = parseFloat(option.dataset.value);
+        }
+    });
+    
+    return closestValue;
+}
+
+// Start the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', init);
 
 // Handle iPhone home bar
