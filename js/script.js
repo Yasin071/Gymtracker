@@ -359,35 +359,65 @@ function updateSelectedRep(rep) {
     });
 }
 
-// Simplified Dumbbell Weight Picker (tap to select)
 function setupDumbbellWeightPicker() {
-    // Clear existing options
+    // Clear existing picker content
     elements.dumbbellWeightPicker.innerHTML = '';
     
-    // Create weight options (2.5kg to 50kg in 2.5kg increments)
-    for (let i = 2.5; i <= 50; i += 2.5) {
-        const weightOption = document.createElement('div');
-        weightOption.textContent = `${i}kg`;
-        weightOption.dataset.value = i;
-        elements.dumbbellWeightPicker.appendChild(weightOption);
-        
-        // Add click handler for each weight
-        weightOption.addEventListener('click', () => {
-            state.selectedWeight = parseFloat(weightOption.dataset.value);
-            highlightSelectedWeight(weightOption);
-        });
-    }
+    // Create control buttons container
+    const controls = document.createElement('div');
+    controls.className = 'dumbbell-picker-controls';
+    controls.innerHTML = `
+        <button class="decrement-btn">-2.5kg</button>
+        <div class="weight-display">${state.dumbbellWeight}kg</div>
+        <button class="increment-btn">+2.5kg</button>
+    `;
     
-    // Picker controls
+    // Insert controls at the top of the modal
+    elements.dumbbellPickerModal.querySelector('.modal-content').insertBefore(
+        controls,
+        elements.dumbbellPickerModal.querySelector('.picker-container')
+    );
+
+    // Button functionality
+    elements.dumbbellPickerModal.querySelector('.increment-btn').addEventListener('click', () => {
+        const newWeight = parseFloat((state.dumbbellWeight + 2.5).toFixed(1));
+        if (newWeight <= 50) {
+            state.dumbbellWeight = newWeight;
+            updateDumbbellWeight();
+            elements.dumbbellPickerModal.querySelector('.weight-display').textContent = `${newWeight}kg`;
+        }
+    });
+
+    elements.dumbbellPickerModal.querySelector('.decrement-btn').addEventListener('click', () => {
+        const newWeight = parseFloat((state.dumbbellWeight - 2.5).toFixed(1));
+        if (newWeight >= 2.5) {
+            state.dumbbellWeight = newWeight;
+            updateDumbbellWeight();
+            elements.dumbbellPickerModal.querySelector('.weight-display').textContent = `${newWeight}kg`;
+        }
+    });
+
+    // Keep existing confirm/cancel buttons
     elements.cancelDumbbell.addEventListener('click', () => {
         elements.dumbbellPickerModal.style.display = 'none';
     });
     
     elements.confirmDumbbell.addEventListener('click', () => {
         elements.dumbbellPickerModal.style.display = 'none';
-        state.dumbbellWeight = state.selectedWeight;
-        updateDumbbellWeight();
     });
+}
+
+// Simplified version since we're using buttons now
+function updateSelectedDumbbellWeight(weight) {
+    state.dumbbellWeight = weight;
+    if (elements.dumbbellPickerModal.querySelector('.weight-display')) {
+        elements.dumbbellPickerModal.querySelector('.weight-display').textContent = `${weight}kg`;
+    }
+}
+
+function showDumbbellWeightPicker() {
+    elements.dumbbellPickerModal.style.display = 'flex';
+    updateSelectedDumbbellWeight(state.dumbbellWeight);
 }
 
 function highlightSelectedWeight(selectedOption) {
@@ -398,21 +428,6 @@ function highlightSelectedWeight(selectedOption) {
     
     // Add to clicked option
     selectedOption.classList.add('selected');
-}
-
-function showDumbbellWeightPicker() {
-    elements.dumbbellPickerModal.style.display = 'flex';
-    
-    // Highlight current weight when opening picker
-    const currentWeight = state.dumbbellWeight;
-    Array.from(elements.dumbbellWeightPicker.children).forEach(option => {
-        if (parseFloat(option.dataset.value) === currentWeight) {
-            option.classList.add('selected');
-            state.selectedWeight = currentWeight;
-        } else {
-            option.classList.remove('selected');
-        }
-    });
 }
 
 // Start the app when DOM is loaded
