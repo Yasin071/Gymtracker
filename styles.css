@@ -1,5 +1,4 @@
-/* --- Dein bestehendes CSS bleibt unverändert --- */
-
+/* --- Base Styles --- */
 * {
   margin: 0;
   padding: 0;
@@ -74,6 +73,7 @@ header {
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.1s, background-color 0.2s;
+  min-height: 44px; /* Added from mobile optimizations */
 }
 
 .control-btn:active {
@@ -120,6 +120,7 @@ header {
   border: none;
   position: relative;
   z-index: 1;
+  min-height: 44px; /* Added from mobile optimizations */
 }
 
 .weight-options {
@@ -155,6 +156,7 @@ header {
   transition: background-color 0.2s;
   flex-shrink: 0;
   user-select: none;
+  min-height: 44px; /* Added from mobile optimizations */
 }
 
 .weight-option:active {
@@ -191,20 +193,7 @@ header {
   font-size: 16px;
 }
 
-/* Optional slide-in animation */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* --- Neue CSS für Barbell Visual --- */
-
+/* --- Barbell Visualization --- */
 .barbell-container {
   position: relative;
   height: 120px;
@@ -256,17 +245,14 @@ header {
 }
 
 .plates-container.left {
-    left: calc(50% - 200px - 15px);  /* Adjusted position */
-    flex-direction: row-reverse;
-    transform: translateX(-100%) translateY(-50%);
-    z-index: 2;
+  left: calc(50% - 200px - 15px);
+  flex-direction: row-reverse;
+  transform: translateX(-100%) translateY(-50%);
 }
 
 .plates-container.right {
-    left: calc(50% + 200px + 15px);  /* Adjusted position */
-    flex-direction: row;
-    transform: translateY(-50%);
-    z-index: 2;
+  left: calc(50% + 200px + 15px);
+  flex-direction: row;
 }
 
 .plate {
@@ -294,7 +280,7 @@ header {
   position: relative;
 }
 
-/* Mülleimer Bereich */
+/* Trash Area */
 .trash-area {
   position: fixed;
   bottom: 20px;
@@ -318,4 +304,112 @@ header {
 .trash-area.dragover {
   background-color: #cc0000;
   box-shadow: 0 0 20px #ff0000;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --- Mobile Optimizations --- */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    header {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .barbell-container {
+        height: 80px;
+        max-width: 100%;
+    }
+
+    .bar {
+        width: 80%;
+        height: 15px;
+    }
+
+    .plate {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+
+    .collar {
+        width: 20px;
+        height: 30px;
+    }
+
+    .collar.left {
+        left: calc(10% - 10px);
+    }
+
+    .collar.right {
+        left: calc(90% - 10px);
+    }
+
+    .plates-container.left {
+        left: calc(10% - 40px);
+    }
+
+    .plates-container.right {
+        left: calc(90% + 10px);
+    }
+
+    .control-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .control-btn {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .weight-selector-btn {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    .weight-options {
+        right: 0;
+        left: auto;
+        top: 100%;
+        width: 100%;
+        max-width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .weight-option {
+        padding: 10px 15px;
+        margin: 5px;
+        flex: 1 0 30%;
+    }
+
+    .trash-area {
+        width: 80px;
+        height: 80px;
+        font-size: 14px;
+        bottom: 10px;
+        right: 10px;
+    }
+}
+
+/* Global touch improvements */
+button {
+    user-select: none;
+    -webkit-user-select: none;
 }
