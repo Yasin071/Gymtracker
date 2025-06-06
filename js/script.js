@@ -478,3 +478,62 @@ function updateTotalWeight() {
   const totalWeight = leftWeight + rightWeight + 20; // 20kg for the barbell
   document.getElementById('total-weight').textContent = totalWeight.toFixed(2);
 }
+// ======================
+// PLATE QUICK-ADD FEATURE (SAFE INTEGRATION)
+// ======================
+function initQuickAddButton() {
+  // Only proceed if the button exists (safety check)
+  const quickAddBtn = document.querySelector('.plate-quickadd-btn');
+  if (!quickAddBtn) return;
+
+  const quickAddSlider = document.querySelector('.plate-quickadd-slider');
+  const plateOptions = document.querySelectorAll('.plate-option');
+  let longPressTimer;
+  let isSliderOpen = false;
+
+  // Long press logic (mobile + desktop)
+  quickAddBtn.addEventListener('mousedown', startLongPress);
+  quickAddBtn.addEventListener('touchstart', startLongPress);
+
+  function startLongPress(e) {
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+      quickAddSlider.classList.add('active');
+      isSliderOpen = true;
+    }, 300);
+  }
+
+  // Cleanup timers
+  window.addEventListener('mouseup', cancelLongPress);
+  window.addEventListener('touchend', cancelLongPress);
+  function cancelLongPress() {
+    clearTimeout(longPressTimer);
+  }
+
+  // Plate selection (uses your existing addWeight() function)
+  plateOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      const weight = parseFloat(this.getAttribute('data-weight'));
+      if (typeof addWeight === 'function') { // Safety check
+        addWeight(weight/2); // Adds to both sides
+      }
+      quickAddSlider.classList.remove('active');
+      isSliderOpen = false;
+    });
+  });
+
+  // Close slider when clicking outside
+  document.addEventListener('click', function(e) {
+    if (isSliderOpen && !quickAddSlider.contains(e.target) && e.target !== quickAddBtn) {
+      quickAddSlider.classList.remove('active');
+      isSliderOpen = false;
+    }
+  });
+}
+
+// Initialize after DOM loads (compatible with your existing code)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initQuickAddButton);
+} else {
+  initQuickAddButton(); // Already loaded
+}
