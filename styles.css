@@ -124,18 +124,19 @@ header {
 
 .weight-options {
   position: absolute;
-  left: 0;
+  top: 0;
+  right: 100%;
   background-color: white;
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   display: none;
+  flex-direction: row;
   width: auto;
-  max-width: 80vw;
+  max-width: 90vw;
   overflow-x: auto;
   white-space: nowrap;
   z-index: 10;
-  gap: 8px;
 }
 
 .weight-options.show {
@@ -154,37 +155,6 @@ header {
   transition: background-color 0.2s;
   flex-shrink: 0;
   user-select: none;
-}
-
-/* ===== Mobile Responsive Styles ===== */
-@media (max-width: 768px) {
-  .weight-options {
-    top: 50%;
-    left: 0;
-    right: auto;
-    transform: translateY(-50%);
-    flex-direction: row-reverse;
-    max-width: 75vw;
-    padding: 8px;
-  }
-  
-  .weight-option {
-    padding: 10px 12px;
-    font-size: 14px;
-    min-width: 50px;
-  }
-}
-
-/* KEEP ALL EXISTING CODE BELOW THIS */
-.weight-option:active {
-  background-color: #ddd;
-}
-
-.sets-list {
-  flex: 1;
-  overflow-y: auto;
-  border-top: 1px solid #ddd;
-  padding-top: 15px;
 }
 
 .weight-option:active {
