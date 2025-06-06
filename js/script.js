@@ -387,7 +387,7 @@ function cancelLongPress() {
 plateOptions.forEach(option => {
   option.addEventListener('click', function() {
     const weight = parseFloat(this.getAttribute('data-weight'));
-    addWeight(weight/2); // Add to each side
+    addPlateToBothSides(weight); // New function to handle plate addition
     quickAddSlider.classList.remove('active');
     isSliderOpen = false;
   });
@@ -400,3 +400,81 @@ document.addEventListener('click', function(e) {
     isSliderOpen = false;
   }
 });
+
+// New function to add plates to both sides
+function addPlateToBothSides(weight) {
+  // Get current weight values
+  const leftWeight = parseFloat(document.getElementById('weight-left').textContent);
+  const rightWeight = parseFloat(document.getElementById('weight-right').textContent);
+  
+  // Calculate new weights
+  const newLeftWeight = leftWeight + (weight/2);
+  const newRightWeight = rightWeight + (weight/2);
+  
+  // Update display
+  document.getElementById('weight-left').textContent = newLeftWeight.toFixed(2);
+  document.getElementById('weight-right').textContent = newRightWeight.toFixed(2);
+  
+  // Trigger your existing barbell visualization
+  updateBarbell(); // This should be your existing function that updates the plates visualization
+  
+  // Update total weight display
+  updateTotalWeight();
+}
+
+// If you don't have an updateBarbell() function, we'll need to implement it
+function updateBarbell() {
+  // Clear existing plates
+  document.querySelectorAll('.plate').forEach(plate => plate.remove());
+  
+  // Get current weights
+  const leftWeight = parseFloat(document.getElementById('weight-left').textContent);
+  const rightWeight = parseFloat(document.getElementById('weight-right').textContent);
+  
+  // Add plates to left side (you'll need to implement this based on your visualization)
+  addPlatesToSide('left', leftWeight);
+  
+  // Add plates to right side
+  addPlatesToSide('right', rightWeight);
+}
+
+// Helper function to add plates visualization to one side
+function addPlatesToSide(side, weight) {
+  const platesContainer = document.querySelector(`.${side}-plates`);
+  const plateTypes = [25, 20, 15, 10, 5, 2.5, 1.25, 0.5, 0.25];
+  let remainingWeight = weight;
+  
+  plateTypes.forEach(plateWeight => {
+    while (remainingWeight >= plateWeight) {
+      const plate = document.createElement('div');
+      plate.className = `plate ${side}-plate`;
+      plate.style.backgroundColor = getPlateColor(plateWeight);
+      platesContainer.appendChild(plate);
+      remainingWeight -= plateWeight;
+    }
+  });
+}
+
+// Helper function to get color based on plate weight
+function getPlateColor(weight) {
+  const colors = {
+    25: '#ff0000',    // Red
+    20: '#0000ff',    // Blue
+    15: '#ffff00',    // Yellow
+    10: '#00ff00',    // Green
+    5: '#ffffff',     // White
+    2.5: '#ff00ff',   // Magenta
+    1.25: '#00ffff',  // Cyan
+    0.5: '#ffa500',   // Orange
+    0.25: '#808080'   // Gray
+  };
+  return colors[weight] || '#cccccc';
+}
+
+// Update total weight display
+function updateTotalWeight() {
+  const leftWeight = parseFloat(document.getElementById('weight-left').textContent);
+  const rightWeight = parseFloat(document.getElementById('weight-right').textContent);
+  const totalWeight = leftWeight + rightWeight + 20; // 20kg for the barbell
+  document.getElementById('total-weight').textContent = totalWeight.toFixed(2);
+}
