@@ -1,152 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Gym Tracker</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barbell Tracker</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="screen-manager">
-        <!-- Home Screen -->
-        <div class="screen home-screen active" id="home-screen">
-            <div class="header">
-                Gym Tracker
-                <button class="home-button" style="visibility: hidden;">Home</button>
-            </div>
-            <div class="equipment-buttons">
-                <div class="equipment-button" id="barbell-button">
-                    Barbell
-                </div>
-                <div class="equipment-button" id="dumbbell-button">
-                    Dumbbell
-                </div>
-            </div>
-        </div>
-        
-        <!-- Barbell Screen -->
-        <div class="screen" id="barbell-screen">
-            <div class="header">
-                Barbell Tracker
-                <button class="home-button">Home</button>
-            </div>
-            <div class="barbell-section">
-                <div class="total-weight" id="total-weight-label">Total: 20 kg</div>
-                <div class="barbell-visual-container">
-                    <div class="barbell-visual">
-                        <div class="plate-column left-plates" id="left-plates"></div>
-                        <div class="barbell-sleeve"></div>
-                        <div class="plate-column right-plates" id="right-plates"></div>
-                    </div>
-                </div>
-                <div class="sets-display" id="sets-label">No sets yet</div>
-            </div>
-            <div class="controls">
-                <select id="exercise-select">
-                    <option value="squat">Squat</option>
-                    <option value="bench">Bench Press</option>
-                    <option value="incline_bench">Incline Bench Press (SM)</option>
-                    <option value="deadlift">Deadlift</option>
-                    <option value="ohp">Overhead Press</option>
-                    <option value="rows">Barbell Rows</option>
-                </select>
-                <div class="button-row">
-                    <button id="set-button">💪 Save Set</button>
-                    <button id="reset-weight-button">🔄 Reset Weight</button>
-                </div>
-                <div class="button-row">
-                    <button id="delete-last-button">❌ Delete Last Set</button>
-                </div>
-                <div class="timer" id="rest-timer">Rest: 0:00</div>
-                <div class="plate-buttons">
-                    <button class="plate-button" data-weight="5">5 kg</button>
-                    <button class="plate-button" data-weight="10">10 kg</button>
-                    <button class="plate-button" data-weight="15">15 kg</button>
-                    <button class="plate-button" data-weight="20">20 kg</button>
-                </div>
-            </div>
-        </div>
+  <header>
+    <h1>Barbell Tracker</h1>
+    <a href="#" class="home-btn" id="homeBtn">Home</a>
+  </header>
 
-<!-- Plate Quick Add Button -->
-<div class="plate-quickadd-container">
-  <div class="plate-quickadd-btn">+</div>
-  <div class="plate-quickadd-slider">
-    <div class="plate-option" data-weight="25">25</div>
-    <div class="plate-option" data-weight="20">20</div>
-    <div class="plate-option" data-weight="15">15</div>
-    <div class="plate-option" data-weight="10">10</div>
-    <div class="plate-option" data-weight="5">5</div>
-    <div class="plate-option" data-weight="2.5">2.5</div>
-    <div class="plate-option" data-weight="1.25">1.25</div>
+  <div class="container">
+    <div class="total-weight" id="totalWeight">Total: 20 kg</div>
+
+    <div class="exercise-name" id="exerciseName">Squat</div>
+
+    <!-- Neue visuelle Barbell -->
+    <div class="barbell-container" id="barbellContainer">
+      <div class="bar"></div>
+      <div class="collar left"></div>
+      <div class="collar right"></div>
+      <div class="plates-container left" id="leftPlates"></div>
+      <div class="plates-container right" id="rightPlates"></div>
+    </div>
+
+    <div class="control-buttons">
+      <button class="control-btn save-btn" id="saveBtn">Save Set</button>
+      <button class="control-btn reset-btn" id="resetBtn">Reset Weight</button>
+      <button class="control-btn delete-btn" id="deleteBtn">Delete Last Set</button>
+    </div>
+
+    <div class="rest-timer" id="restTimer">First set</div>
+
+    <div class="weight-selector-container">
+      <button class="weight-selector-btn" id="weightBtn">Add Weight</button>
+      <div class="weight-options" id="weightOptions">
+        <div class="weight-option" data-weight="5">5 kg</div>
+        <div class="weight-option" data-weight="10">10 kg</div>
+        <div class="weight-option" data-weight="15">15 kg</div>
+        <div class="weight-option" data-weight="20">20 kg</div>
+        <div class="weight-option" data-weight="25">25 kg</div>
+        <div class="weight-option" data-weight="30">30 kg</div>
+      </div>
+    </div>
+
+    <div class="sets-list" id="setsList">
+      <div class="no-sets">No sets yet</div>
+    </div>
+
+    <input
+      type="number"
+      class="rep-input"
+      id="repInput"
+      placeholder="Enter reps"
+      min="1"
+    />
   </div>
-</div>
-        
 
-        <!-- Dumbbell Screen -->
-        <div class="screen" id="dumbbell-screen">
-            <div class="header">
-                Dumbbell Tracker
-                <button class="home-button">Home</button>
-            </div>
-            <div class="dumbbell-section">
-                <div class="total-weight" id="dumbbell-weight-label">Weight: 5 kg (each)</div>
-                <div class="dumbbell-visual-container">
-                    <div class="dumbbell-visual">
-                        <div class="dumbbell" id="left-dumbbell">5kg</div>
-                        <div class="dumbbell" id="right-dumbbell">5kg</div>
-                    </div>
-                </div>
-                <div class="sets-display" id="dumbbell-sets-label">No sets yet</div>
-            </div>
-            <div class="controls">
-                <select id="dumbbell-exercise-select">
-                    <option value="shoulder_press">Shoulder Press</option>
-                    <option value="bicep_curl">Bicep Curl</option>
-                    <option value="tricep_extension">Tricep Extension</option>
-                    <option value="lateral_raise">Lateral Raise</option>
-                    <option value="chest_press">Chest Press</option>
-                </select>
-                <div class="button-row">
-                    <button id="dumbbell-set-button">💪 Save Set</button>
-                    <button id="dumbbell-reset-button">🔄 Reset Weight</button>
-                </div>
-                <div class="button-row">
-                    <button id="dumbbell-delete-button">❌ Delete Last Set</button>
-                </div>
-                <div class="timer" id="dumbbell-rest-timer">Rest: 0:00</div>
-            </div>
-        </div>
-    </div>
+  <!-- Mülleimer -->
+  <div class="trash-area" id="trashArea">Trash</div>
 
-    <!-- Rep Picker Modal -->
-    <div class="modal" id="rep-picker-modal">
-        <div class="modal-content">
-            <h3>Select Reps</h3>
-            <div class="picker-container">
-                <div class="picker" id="rep-picker"></div>
-            </div>
-            <div class="modal-buttons">
-                <button id="cancel-reps">Cancel</button>
-                <button id="confirm-reps">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Dumbbell Weight Picker Modal -->
-    <div class="modal" id="dumbbell-picker-modal">
-        <div class="modal-content">
-            <h3>Select Dumbbell Weight</h3>
-            <div class="picker-container">
-                <div class="picker" id="dumbbell-weight-picker"></div>
-            </div>
-            <div class="modal-buttons">
-                <button id="cancel-dumbbell">Cancel</button>
-                <button id="confirm-dumbbell">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
