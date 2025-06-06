@@ -116,9 +116,9 @@
             if (timeDiffSec >= 60) {
                 const minutes = Math.floor(timeDiffSec / 60);
                 const seconds = timeDiffSec % 60;
-                timeText = `${minutes}m ${seconds}s since previous`;
+                timeText = `${minutes}m ${seconds}s rest`;
             } else {
-                timeText = `${timeDiffSec}s since previous`;
+                timeText = `${timeDiffSec}s rest`;
             }
         }
         
