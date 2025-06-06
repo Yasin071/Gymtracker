@@ -353,3 +353,50 @@ document.addEventListener('DOMContentLoaded', init);
 
 // Handle iPhone home bar
 document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
+
+// Plate Quick Add Functionality
+const quickAddBtn = document.querySelector('.plate-quickadd-btn');
+const quickAddSlider = document.querySelector('.plate-quickadd-slider');
+const plateOptions = document.querySelectorAll('.plate-option');
+let longPressTimer;
+let isSliderOpen = false;
+
+// Long press to open slider
+quickAddBtn.addEventListener('mousedown', startLongPress);
+quickAddBtn.addEventListener('touchstart', startLongPress);
+
+function startLongPress(e) {
+  e.preventDefault();
+  longPressTimer = setTimeout(() => {
+    quickAddSlider.classList.add('active');
+    isSliderOpen = true;
+  }, 300);
+}
+
+// Cancel long press if released too soon
+window.addEventListener('mouseup', cancelLongPress);
+window.addEventListener('touchend', cancelLongPress);
+
+function cancelLongPress() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+  }
+}
+
+// Handle plate selection
+plateOptions.forEach(option => {
+  option.addEventListener('click', function() {
+    const weight = parseFloat(this.getAttribute('data-weight'));
+    addWeight(weight/2); // Add to each side
+    quickAddSlider.classList.remove('active');
+    isSliderOpen = false;
+  });
+});
+
+// Close slider when clicking outside
+document.addEventListener('click', function(e) {
+  if (isSliderOpen && !quickAddSlider.contains(e.target) && e.target !== quickAddBtn) {
+    quickAddSlider.classList.remove('active');
+    isSliderOpen = false;
+  }
+});
