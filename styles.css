@@ -319,3 +319,104 @@ header {
   background-color: #cc0000;
   box-shadow: 0 0 20px #ff0000;
 }
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    header {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .barbell-container {
+        height: 80px;
+        max-width: 100%;
+    }
+
+    .bar {
+        width: 80%;
+        height: 15px;
+    }
+
+    .plate {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+
+    .collar {
+        width: 20px;
+        height: 30px;
+    }
+
+    .collar.left {
+        left: calc(10% - 10px);
+    }
+
+    .collar.right {
+        left: calc(90% - 10px);
+    }
+
+    .plates-container.left {
+        left: calc(10% - 40px);
+    }
+
+    .plates-container.right {
+        left: calc(90% + 10px);
+    }
+
+    .control-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .control-btn {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .weight-selector-btn {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    .weight-options {
+        right: 0;
+        left: auto;
+        top: 100%;
+        width: 100%;
+        max-width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .weight-option {
+        padding: 10px 15px;
+        margin: 5px;
+        flex: 1 0 30%;
+    }
+
+    .trash-area {
+        width: 80px;
+        height: 80px;
+        font-size: 14px;
+        bottom: 10px;
+        right: 10px;
+    }
+}
+
+/* Additional touch target sizing */
+button, .weight-option {
+    min-height: 44px; /* Recommended minimum touch target size */
+}
+
+/* Prevent text selection on buttons */
+button {
+    user-select: none;
+    -webkit-user-select: none;
+}
