@@ -1,539 +1,250 @@
-// App state
-const state = {
-    totalWeight: 20,
-    currentExercise: "squat",
-    sets: JSON.parse(localStorage.getItem('gym-sets')) || [],
-    restTimer: null,
-    restSeconds: 0,
-    currentPlates: [],
-    selectedReps: 5,
-    isDragging: false,
-    startY: 0,
-    currentY: 0,
-    pickerOffset: 75, // Default position for 5 reps
-    isDumbbell: false
-};
+(function() {
+    // --- Main Variables ---
+    let currentWeight = 20; // Starting weight (20kg barbell)
+    let sets = [];
+    let restStartTime = null;
+    let platesLeft = [];
+    let platesRight = [];
+    let isMenuOpen = false;
+    let holdTimeout;
 
-// DOM elements
-const elements = {
-    screens: {
-        home: document.getElementById('home-screen'),
-        barbell: document.getElementById('barbell-screen'),
-        dumbbell: document.getElementById('dumbbell-screen')
-    },
-    buttons: {
-        home: document.querySelectorAll('.home-button'),
-        barbell: document.getElementById('barbell-button'),
-        dumbbell: document.getElementById('dumbbell-button')
-    },
-    totalWeight: document.getElementById('total-weight-label'),
-    dumbbellTotalWeight: document.getElementById('dumbbell-total-weight-label'),
-    setsLabel: document.getElementById('sets-label'),
-    leftPlates: document.getElementById('left-plates'),
-    rightPlates: document.getElementById('right-plates'),
-    dumbbellPlates: document.getElementById('dumbbell-plates'),
-    setButton: document.getElementById('set-button'),
-    dumbbellSetButton: document.getElementById('dumbbell-set-button'),
-    resetButton: document.getElementById('reset-weight-button'),
-    dumbbellResetButton: document.getElementById('dumbbell-reset-weight-button'),
-    deleteButton: document.getElementById('delete-last-button'),
-    plateButtons: document.querySelectorAll('.plate-button'),
-    dumbbellPlateButtons: document.querySelectorAll('.dumbbell-plate-button'),
-    exerciseSelect: document.getElementById('exercise-select'),
-    timerDisplay: document.getElementById('rest-timer'),
-    repPicker: document.getElementById('rep-picker'),
-    repPickerModal: document.getElementById('rep-picker-modal'),
-    cancelReps: document.getElementById('cancel-reps'),
-    confirmReps: document.getElementById('confirm-reps'),
-    pickerContainer: document.querySelector('.picker-container')
-};
+    // --- DOM Elements ---
+    const totalWeightEl = document.getElementById("totalWeight");
+    const setsListEl = document.getElementById("setsList");
+    const repInput = document.getElementById("repInput");
+    const restTimerEl = document.getElementById("restTimer");
+    const weightBtn = document.getElementById("weightBtn");
+    const weightOptions = document.getElementById("weightOptions");
+    const leftPlatesContainer = document.getElementById("leftPlates");
+    const rightPlatesContainer = document.getElementById("rightPlates");
+    const trashArea = document.getElementById("trashArea");
 
-// Initialize the app
-function init() {
-    setupNavigation();
-    setupBarbellFunctionality();
-    setupDumbbellFunctionality();
-    setupRepPicker();
-    updateTotalWeight();
-    updateSetsLabel();
-    startRestTimer();
-}
-
-// Navigation setup
-function setupNavigation() {
-    // Home button
-    elements.buttons.home.forEach(btn => {
-        btn.addEventListener('click', () => showScreen('home'));
-    });
-    
-    // Barbell button
-    elements.buttons.barbell.addEventListener('click', () => {
-        state.isDumbbell = false;
-        showScreen('barbell');
-        resetWeight();
-    });
-    
-    // Dumbbell button
-    elements.buttons.dumbbell.addEventListener('click', () => {
-        state.isDumbbell = true;
-        showScreen('dumbbell');
-        resetWeight();
-    });
-}
-
-function showScreen(screenName) {
-    Object.values(elements.screens).forEach(screen => {
-        screen.classList.remove('active');
-    });
-    elements.screens[screenName].classList.add('active');
-}
-
-// Barbell functionality
-function setupBarbellFunctionality() {
-    // Plate buttons
-    elements.plateButtons.forEach(btn => {
-        btn.addEventListener('click', () => addPlate(parseFloat(btn.dataset.weight)));
-    });
-    
-    // Control buttons
-    elements.setButton.addEventListener('click', showRepPicker);
-    elements.resetButton.addEventListener('click', resetWeight);
-    elements.deleteButton.addEventListener('click', deleteLastSet);
-    
-    // Exercise selection
-    elements.exerciseSelect.addEventListener('change', (e) => {
-        if (state.currentExercise !== e.target.value) resetWeight();
-        state.currentExercise = e.target.value;
-        updateSetsLabel();
-    });
-}
-
-// Dumbbell functionality
-function setupDumbbellFunctionality() {
-    // Plate buttons
-    elements.dumbbellPlateButtons.forEach(btn => {
-        btn.addEventListener('click', () => addDumbbellPlate(parseFloat(btn.dataset.weight)));
-    });
-    
-    // Control buttons
-    elements.dumbbellSetButton.addEventListener('click', showRepPicker);
-    elements.dumbbellResetButton.addEventListener('click', resetWeight);
-}
-
-function addDumbbellPlate(weight) {
-    state.currentPlates.push(weight);
-    renderDumbbellPlates();
-    state.totalWeight += weight * 2; // Each dumbbell gets the same plates
-    updateTotalWeight();
-}
-
-function renderDumbbellPlates() {
-    elements.dumbbellPlates.innerHTML = '';
-    
-    state.currentPlates.forEach(weight => {
-        const plate = document.createElement('div');
-        plate.className = 'dumbbell-plate';
-        plate.textContent = `${weight} kg`;
-        plate.dataset.weight = weight;
-        elements.dumbbellPlates.appendChild(plate);
-    });
-}
-
-// Core functions
-function addPlate(weight) {
-    state.currentPlates.push(weight);
-    renderPlates();
-    state.totalWeight += weight * 2;
-    updateTotalWeight();
-}
-
-function renderPlates() {
-    elements.leftPlates.innerHTML = '';
-    elements.rightPlates.innerHTML = '';
-    
-    state.currentPlates.forEach(weight => {
-        const plate = document.createElement('div');
-        plate.className = 'plate';
-        plate.textContent = `${weight} kg`;
-        plate.dataset.weight = weight;
-        elements.leftPlates.appendChild(plate.cloneNode(true));
-        elements.rightPlates.appendChild(plate);
-    });
-}
-
-function resetWeight() {
-    state.currentPlates = [];
-    state.totalWeight = state.isDumbbell ? 0 : 20; // Dumbbell starts at 0, barbell at 20kg
-    if (state.isDumbbell) {
-        renderDumbbellPlates();
-    } else {
-        renderPlates();
+    // --- Core Functions ---
+    function calculateCurrentWeight() {
+        let sumPlates = 0;
+        platesLeft.forEach(p => sumPlates += p.weight);
+        platesRight.forEach(p => sumPlates += p.weight);
+        return 20 + sumPlates; // 20kg barbell
     }
-    updateTotalWeight();
-}
 
-function saveSetWithReps(reps) {
-    const exercisePrefix = state.isDumbbell ? 'Dumbbell ' : '';
-    state.sets.push({
-        exercise: exercisePrefix + state.currentExercise,
-        weight: state.totalWeight,
-        reps: reps,
-        date: new Date().toISOString()
-    });
-    
-    localStorage.setItem('gym-sets', JSON.stringify(state.sets));
-    updateSetsLabel();
-    resetRestTimer();
-}
-
-function deleteLastSet() {
-    if (state.sets.length > 0) {
-        state.sets.pop();
-        localStorage.setItem('gym-sets', JSON.stringify(state.sets));
-        updateSetsLabel();
+    function updateTotalWeight() {
+        currentWeight = calculateCurrentWeight();
+        totalWeightEl.textContent = `Total: ${currentWeight} kg`;
+        totalWeightEl.classList.add("highlight");
+        setTimeout(() => totalWeightEl.classList.remove("highlight"), 600);
     }
-}
 
-function updateTotalWeight() {
-    const weightText = `Total: ${state.totalWeight} kg`;
-    elements.totalWeight.textContent = weightText;
-    elements.dumbbellTotalWeight.textContent = weightText;
-}
-
-function updateSetsLabel() {
-    const exerciseSets = state.sets
-        .filter(set => set.exercise.includes(state.currentExercise))
-        .slice(-3);
-    
-    elements.setsLabel.textContent = exerciseSets.length > 0
-        ? `${state.currentExercise.toUpperCase().replace('_', ' ')}:\n${exerciseSets.map(set => 
-            `${set.weight}kg × ${set.reps}`).join('\n')}`
-        : "No sets yet";
-}
-
-function startRestTimer() {
-    clearInterval(state.restTimer);
-    state.restTimer = setInterval(() => {
-        state.restSeconds++;
-        const mins = Math.floor(state.restSeconds / 60);
-        const secs = state.restSeconds % 60;
-        elements.timerDisplay.textContent = `Rest: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    }, 1000);
-}
-
-function resetRestTimer() {
-    state.restSeconds = 0;
-    elements.timerDisplay.textContent = "Rest: 0:00";
-}
-
-// Rep Picker Functions
-function setupRepPicker() {
-    // Create rep options (1-20)
-    for (let i = 1; i <= 20; i++) {
-        const repOption = document.createElement('div');
-        repOption.textContent = i;
-        repOption.dataset.value = i;
-        elements.repPicker.appendChild(repOption);
+    function createPlateElement(weight, side, index) {
+        const plateEl = document.createElement("div");
+        plateEl.classList.add("plate");
+        plateEl.textContent = weight;
+        plateEl.setAttribute("draggable", "true");
+        plateEl.dataset.side = side;
+        plateEl.dataset.index = index;
+        plateEl.addEventListener("dragstart", dragStart);
+        plateEl.addEventListener("dragend", dragEnd);
+        return plateEl;
     }
-    
-    // Picker controls
-    elements.cancelReps.addEventListener('click', () => {
-        elements.repPickerModal.style.display = 'none';
-    });
-    
-    elements.confirmReps.addEventListener('click', () => {
-        elements.repPickerModal.style.display = 'none';
-        saveSetWithReps(state.selectedReps);
-    });
-    
-    // Touch events
-    elements.pickerContainer.addEventListener('touchstart', handleTouchStart);
-    elements.pickerContainer.addEventListener('touchmove', handleTouchMove);
-    elements.pickerContainer.addEventListener('touchend', handleTouchEnd);
-    
-    // Mouse events for desktop
-    elements.pickerContainer.addEventListener('mousedown', handleTouchStart);
-    elements.pickerContainer.addEventListener('mousemove', handleTouchMove);
-    elements.pickerContainer.addEventListener('mouseup', handleTouchEnd);
-    elements.pickerContainer.addEventListener('mouseleave', handleTouchEnd);
-}
 
-function showRepPicker() {
-    elements.repPickerModal.style.display = 'flex';
-    updateSelectedRep(state.selectedReps);
-}
+    function renderPlates() {
+        leftPlatesContainer.innerHTML = "";
+        rightPlatesContainer.innerHTML = "";
 
-function updateSelectedRep(rep) {
-    const repOptions = elements.repPicker.children;
-    const selectedIndex = rep - 1;
-    state.pickerOffset = 75 - (selectedIndex * 30);
-    state.selectedReps = rep;
-    
-    elements.repPicker.style.transition = 'transform 0.3s ease-out';
-    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-    
-    // Highlight selected rep
-    Array.from(repOptions).forEach((option, index) => {
-        option.classList.toggle('selected', index === selectedIndex);
-    });
-}
+        platesLeft.forEach((plate, index) => {
+            const plateEl = createPlateElement(plate.weight, "left", index);
+            leftPlatesContainer.appendChild(plateEl);
+        });
 
-// Touch handlers
-function handleTouchStart(e) {
-    state.isDragging = true;
-    state.startY = e.touches ? e.touches[0].clientY : e.clientY;
-    state.currentY = state.startY;
-    elements.repPicker.style.transition = 'none';
-    e.preventDefault();
-}
-
-function handleTouchMove(e) {
-    if (!state.isDragging) return;
-    
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const deltaY = y - state.currentY;
-    state.currentY = y;
-    
-    // Move the picker
-    state.pickerOffset += deltaY;
-    elements.repPicker.style.transform = `translateY(${state.pickerOffset}px)`;
-    
-    // Highlight closest rep
-    highlightClosestRep();
-    e.preventDefault();
-}
-
-function handleTouchEnd() {
-    if (!state.isDragging) return;
-    state.isDragging = false;
-    
-    // Snap to closest rep
-    const closestRep = getClosestRep();
-    if (closestRep) {
-        updateSelectedRep(closestRep);
-    }
-}
-
-function highlightClosestRep() {
-    const closestRep = getClosestRep();
-    if (closestRep) {
-        const repOptions = elements.repPicker.children;
-        const selectedIndex = closestRep - 1;
-        
-        Array.from(repOptions).forEach((option, index) => {
-            option.classList.toggle('selected', index === selectedIndex);
+        platesRight.forEach((plate, index) => {
+            const plateEl = createPlateElement(plate.weight, "right", index);
+            rightPlatesContainer.appendChild(plateEl);
         });
     }
+
+    // --- Drag & Drop Functions ---
+    function dragStart(event) {
+        const plateEl = event.target;
+        event.dataTransfer.setData("text/plain", JSON.stringify({
+            side: plateEl.dataset.side,
+            index: plateEl.dataset.index
+        }));
+        trashArea.classList.add("dragover");
+    }
+
+    function dragEnd() {
+        trashArea.classList.remove("dragover");
+    }
+
+    // --- Weight Menu Functions ---
+    function openWeightMenu() {
+        weightOptions.classList.add("show");
+        isMenuOpen = true;
+    }
+
+    function closeWeightMenu() {
+        weightOptions.classList.remove("show");
+        isMenuOpen = false;
+    }
+
+    function addPlates(weightPerPlate) {
+    platesLeft.push({weight: weightPerPlate});
+    platesRight.push({weight: weightPerPlate});
+    updateTotalWeight();
+    renderPlates();
 }
 
-function getClosestRep() {
-    const repOptions = elements.repPicker.children;
-    const containerRect = elements.pickerContainer.getBoundingClientRect();
-    const centerY = containerRect.top + containerRect.height / 2;
-    
-    let closestRep = null;
-    let minDistance = Infinity;
-    
-    Array.from(repOptions).forEach((option, index) => {
-        const optionRect = option.getBoundingClientRect();
-        const optionCenterY = optionRect.top + optionRect.height / 2;
-        const distance = Math.abs(optionCenterY - centerY);
+    // --- Set Management ---
+    function renderSets() {
+    if (sets.length === 0) {
+        setsListEl.innerHTML = '<div class="no-sets">No sets yet</div>';
+        restTimerEl.textContent = "First set";
+        restStartTime = null;
+        return;
+    }
+
+    setsListEl.innerHTML = "";
+    sets.forEach((set, i) => {
+        const div = document.createElement("div");
+        div.classList.add("set-item");
         
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestRep = index + 1;
+        // Calculate time since previous set with minutes/seconds formatting
+        let timeText = "First set";
+        if (i > 0) {
+            const prevTime = sets[i-1].time;
+            const timeDiffSec = Math.floor((set.time - prevTime) / 1000);
+            
+            if (timeDiffSec >= 60) {
+                const minutes = Math.floor(timeDiffSec / 60);
+                const seconds = timeDiffSec % 60;
+                timeText = `${minutes}m ${seconds}s since previous`;
+            } else {
+                timeText = `${timeDiffSec}s since previous`;
+            }
+        }
+        
+        div.textContent = `${i + 1}. ${set.weight}kg × ${set.reps} reps (${timeText})`;
+        setsListEl.appendChild(div);
+    });
+}
+    function updateRestTimer() {
+        if (!restStartTime) {
+            restTimerEl.textContent = "First set";
+            return;
+        }
+        const now = Date.now();
+        const diffSec = Math.floor((now - restStartTime) / 1000);
+        restTimerEl.textContent = `Rest: ${diffSec} sec`;
+    }
+
+    // --- Event Listeners ---
+    // Weight Button
+    weightBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        holdTimeout = setTimeout(openWeightMenu, 200);
+    });
+
+    weightBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        holdTimeout = setTimeout(openWeightMenu, 200);
+    }, { passive: false });
+
+    // Cancel hold if released early
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach((evt) => {
+        weightBtn.addEventListener(evt, () => {
+            clearTimeout(holdTimeout);
+        });
+    });
+
+    // Weight selection
+    document.addEventListener("mouseup", (e) => {
+        if (isMenuOpen) {
+            const target = e.target;
+            if (target.classList.contains("weight-option")) {
+                const w = parseInt(target.dataset.weight);
+                addPlates(w);
+                closeWeightMenu();
+            } else {
+                closeWeightMenu();
+            }
         }
     });
-    
-    return closestRep;
-}
 
-// Start the app
-document.addEventListener('DOMContentLoaded', init);
-
-// Handle iPhone home bar
-document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
-
-// Plate Quick Add Functionality
-const quickAddBtn = document.querySelector('.plate-quickadd-btn');
-const quickAddSlider = document.querySelector('.plate-quickadd-slider');
-const plateOptions = document.querySelectorAll('.plate-option');
-let longPressTimer;
-let isSliderOpen = false;
-
-// Long press to open slider
-quickAddBtn.addEventListener('mousedown', startLongPress);
-quickAddBtn.addEventListener('touchstart', startLongPress);
-
-function startLongPress(e) {
-  e.preventDefault();
-  longPressTimer = setTimeout(() => {
-    quickAddSlider.classList.add('active');
-    isSliderOpen = true;
-  }, 300);
-}
-
-// Cancel long press if released too soon
-window.addEventListener('mouseup', cancelLongPress);
-window.addEventListener('touchend', cancelLongPress);
-
-function cancelLongPress() {
-  if (longPressTimer) {
-    clearTimeout(longPressTimer);
-  }
-}
-
-// Handle plate selection
-plateOptions.forEach(option => {
-  option.addEventListener('click', function() {
-    const weight = parseFloat(this.getAttribute('data-weight'));
-    addPlateToBothSides(weight); // New function to handle plate addition
-    quickAddSlider.classList.remove('active');
-    isSliderOpen = false;
-  });
-});
-
-// Close slider when clicking outside
-document.addEventListener('click', function(e) {
-  if (isSliderOpen && !quickAddSlider.contains(e.target) && e.target !== quickAddBtn) {
-    quickAddSlider.classList.remove('active');
-    isSliderOpen = false;
-  }
-});
-
-// New function to add plates to both sides
-function addPlateToBothSides(weight) {
-  // Get current weight values
-  const leftWeight = parseFloat(document.getElementById('weight-left').textContent);
-  const rightWeight = parseFloat(document.getElementById('weight-right').textContent);
-  
-  // Calculate new weights
-  const newLeftWeight = leftWeight + (weight/2);
-  const newRightWeight = rightWeight + (weight/2);
-  
-  // Update display
-  document.getElementById('weight-left').textContent = newLeftWeight.toFixed(2);
-  document.getElementById('weight-right').textContent = newRightWeight.toFixed(2);
-  
-  // Trigger your existing barbell visualization
-  updateBarbell(); // This should be your existing function that updates the plates visualization
-  
-  // Update total weight display
-  updateTotalWeight();
-}
-
-// If you don't have an updateBarbell() function, we'll need to implement it
-function updateBarbell() {
-  // Clear existing plates
-  document.querySelectorAll('.plate').forEach(plate => plate.remove());
-  
-  // Get current weights
-  const leftWeight = parseFloat(document.getElementById('weight-left').textContent);
-  const rightWeight = parseFloat(document.getElementById('weight-right').textContent);
-  
-  // Add plates to left side (you'll need to implement this based on your visualization)
-  addPlatesToSide('left', leftWeight);
-  
-  // Add plates to right side
-  addPlatesToSide('right', rightWeight);
-}
-
-// Helper function to add plates visualization to one side
-function addPlatesToSide(side, weight) {
-  const platesContainer = document.querySelector(`.${side}-plates`);
-  const plateTypes = [25, 20, 15, 10, 5, 2.5, 1.25, 0.5, 0.25];
-  let remainingWeight = weight;
-  
-  plateTypes.forEach(plateWeight => {
-    while (remainingWeight >= plateWeight) {
-      const plate = document.createElement('div');
-      plate.className = `plate ${side}-plate`;
-      plate.style.backgroundColor = getPlateColor(plateWeight);
-      platesContainer.appendChild(plate);
-      remainingWeight -= plateWeight;
-    }
-  });
-}
-
-// Helper function to get color based on plate weight
-function getPlateColor(weight) {
-  const colors = {
-    25: '#ff0000',    // Red
-    20: '#0000ff',    // Blue
-    15: '#ffff00',    // Yellow
-    10: '#00ff00',    // Green
-    5: '#ffffff',     // White
-    2.5: '#ff00ff',   // Magenta
-    1.25: '#00ffff',  // Cyan
-    0.5: '#ffa500',   // Orange
-    0.25: '#808080'   // Gray
-  };
-  return colors[weight] || '#cccccc';
-}
-
-// Update total weight display
-function updateTotalWeight() {
-  const leftWeight = parseFloat(document.getElementById('weight-left').textContent);
-  const rightWeight = parseFloat(document.getElementById('weight-right').textContent);
-  const totalWeight = leftWeight + rightWeight + 20; // 20kg for the barbell
-  document.getElementById('total-weight').textContent = totalWeight.toFixed(2);
-}
-// ======================
-// PLATE QUICK-ADD FEATURE (SAFE INTEGRATION)
-// ======================
-function initQuickAddButton() {
-  // Only proceed if the button exists (safety check)
-  const quickAddBtn = document.querySelector('.plate-quickadd-btn');
-  if (!quickAddBtn) return;
-
-  const quickAddSlider = document.querySelector('.plate-quickadd-slider');
-  const plateOptions = document.querySelectorAll('.plate-option');
-  let longPressTimer;
-  let isSliderOpen = false;
-
-  // Long press logic (mobile + desktop)
-  quickAddBtn.addEventListener('mousedown', startLongPress);
-  quickAddBtn.addEventListener('touchstart', startLongPress);
-
-  function startLongPress(e) {
-    e.preventDefault();
-    longPressTimer = setTimeout(() => {
-      quickAddSlider.classList.add('active');
-      isSliderOpen = true;
-    }, 300);
-  }
-
-  // Cleanup timers
-  window.addEventListener('mouseup', cancelLongPress);
-  window.addEventListener('touchend', cancelLongPress);
-  function cancelLongPress() {
-    clearTimeout(longPressTimer);
-  }
-
-  // Plate selection (uses your existing addWeight() function)
-  plateOptions.forEach(option => {
-    option.addEventListener('click', function() {
-      const weight = parseFloat(this.getAttribute('data-weight'));
-      if (typeof addWeight === 'function') { // Safety check
-        addWeight(weight/2); // Adds to both sides
-      }
-      quickAddSlider.classList.remove('active');
-      isSliderOpen = false;
+    document.addEventListener("touchend", (e) => {
+        if (isMenuOpen) {
+            const touch = e.changedTouches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (el && el.classList.contains("weight-option")) {
+                const w = parseInt(el.dataset.weight);
+                addPlates(w);
+                closeWeightMenu();
+            } else {
+                closeWeightMenu();
+            }
+        }
     });
-  });
 
-  // Close slider when clicking outside
-  document.addEventListener('click', function(e) {
-    if (isSliderOpen && !quickAddSlider.contains(e.target) && e.target !== quickAddBtn) {
-      quickAddSlider.classList.remove('active');
-      isSliderOpen = false;
-    }
-  });
-}
+    // Trash area
+    trashArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        trashArea.classList.add("dragover");
+    });
 
-// Initialize after DOM loads (compatible with your existing code)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initQuickAddButton);
-} else {
-  initQuickAddButton(); // Already loaded
-}
+    trashArea.addEventListener("dragleave", () => {
+        trashArea.classList.remove("dragover");
+    });
+
+    trashArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        trashArea.classList.remove("dragover");
+
+        const data = e.dataTransfer.getData("text/plain");
+        if (!data) return;
+
+        const {side, index} = JSON.parse(data);
+        if (side === "left") {
+            platesLeft.splice(index, 1);
+        } else if (side === "right") {
+            platesRight.splice(index, 1);
+        }
+
+        updateTotalWeight();
+        renderPlates();
+    });
+
+    // Control buttons
+    document.getElementById("saveBtn").addEventListener("click", () => {
+        const reps = parseInt(repInput.value);
+        if (!reps || reps < 1) {
+            alert("Please enter valid reps!");
+            return;
+        }
+        sets.push({ weight: currentWeight, reps: reps, time: Date.now() });
+        repInput.value = "";
+        renderSets();
+        restStartTime = Date.now();
+        updateRestTimer();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+        platesLeft = [];
+        platesRight = [];
+        updateTotalWeight();
+        renderPlates();
+        repInput.value = "";
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", () => {
+        if (sets.length > 0) {
+            sets.pop();
+            renderSets();
+        }
+    });
+
+    // Timer
+    setInterval(updateRestTimer, 1000);
+
+    // Initialization
+    updateTotalWeight();
+    renderPlates();
+    renderSets();
+})();
