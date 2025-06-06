@@ -1,501 +1,321 @@
+/* --- Dein bestehendes CSS bleibt unverändert --- */
+
 * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: #000;
-    color: white;
-    height: 100vh;
-    height: calc(100vh - env(safe-area-inset-bottom));
-    display: flex;
-    flex-direction: column;
-    padding-bottom: env(safe-area-inset-bottom);
+  background-color: #f5f5f5;
+  color: #333;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  touch-action: manipulation;
 }
 
-.screen-manager {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #111;
-    overflow: hidden;
-    position: relative;
+header {
+  background-color: #333;
+  color: white;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.header {
-    background-color: #333;
-    color: white;
-    padding: 12px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
+.home-btn {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
 }
 
-.home-button {
-    position: absolute;
-    right: 15px;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-}
-
-/* Home Screen */
-.home-screen {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    padding: 20px;
-}
-
-.equipment-button {
-    width: 150px;
-    height: 150px;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: #333;
-    border: 2px solid #444;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
-/* Barbell Screen */
-.barbell-section, .dumbbell-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+.container {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .total-weight {
-    text-align: center;
-    font-size: 1.4rem;
-    font-weight: bold;
-    padding: 10px;
-    background-color: #333;
-    color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin: 20px 0;
+  transition: color 0.3s;
 }
 
-.barbell-visual-container, .dumbbell-visual-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 0;
-    padding: 10px;
+.total-weight.highlight {
+  color: #4caf50;
 }
 
-.barbell-visual {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    height: 150px;
-    width: 100%;
-    max-width: 300px;
-    position: relative;
+.exercise-name {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center;
 }
 
-.dumbbell-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    width: 100%;
-    max-width: 300px;
+.control-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
 }
 
-.plate-column {
-    width: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    position: absolute;
-    bottom: 0;
+.control-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.2s;
 }
 
-.left-plates {
-    left: calc(50% - 80px);
+.control-btn:active {
+  transform: scale(0.95);
 }
 
-.right-plates {
-    left: calc(50% + 20px);
+.save-btn {
+  background-color: #4caf50;
+  color: white;
 }
 
-.barbell-sleeve {
-    width: 50px;
-    height: 60px;
-    background-color: #333;
-    position: absolute;
-    left: calc(50% - 25px);
-    bottom: 0;
+.reset-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.rest-timer {
+  text-align: center;
+  margin: 15px 0;
+  font-size: 18px;
+}
+
+.weight-selector-container {
+  position: relative;
+  margin-bottom: 20px;
+  align-self: flex-end;
+}
+
+.weight-selector-btn {
+  padding: 15px 25px;
+  background-color: #333;
+  color: white;
+  border-radius: 30px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+  border: none;
+  position: relative;
+  z-index: 1;
+}
+
+.weight-options {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  background-color: white;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: none;
+  flex-direction: row;
+  width: auto;
+  max-width: 90vw;
+  overflow-x: auto;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.weight-options.show {
+  display: flex;
+  animation: slideIn 0.3s ease-out;
+}
+
+.weight-option {
+  padding: 12px 20px;
+  margin: 0 5px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.weight-option:active {
+  background-color: #ddd;
+}
+
+.sets-list {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
+}
+
+.set-item {
+  background-color: white;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-sets {
+  text-align: center;
+  color: #777;
+  margin-top: 20px;
+}
+
+.rep-input {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+/* Optional slide-in animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --- Neue CSS für Barbell Visual --- */
+
+.barbell-container {
+  position: relative;
+  height: 120px;
+  margin: 0 auto 30px auto;
+  max-width: 600px;
+  user-select: none;
+}
+
+.bar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 20px;
+  background: linear-gradient(90deg, #999, #666);
+  border-radius: 10px;
+  transform: translate(-50%, -50%);
+  box-shadow: inset 0 0 8px #555;
+  z-index: 0;
+}
+
+.collar {
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 40px;
+  background: #444;
+  border-radius: 6px;
+  box-shadow: 0 0 5px #222;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.collar.left {
+  left: calc(50% - 200px - 15px);
+}
+
+.collar.right {
+  left: calc(50% + 200px - 15px);
+}
+
+.plates-container {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  gap: 10px;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.plates-container.left {
+    left: calc(50% - 200px - 15px);  /* Adjusted position */
+    flex-direction: row-reverse;
+    transform: translateX(-100%) translateY(-50%);
     z-index: 2;
-    border-radius: 3px;
 }
 
-.dumbbell {
-    width: 80px;
-    height: 120px;
-    background-color: #333;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    border: 3px solid #444;
-}
-
-.dumbbell:hover {
-    transform: scale(1.05);
+.plates-container.right {
+    left: calc(50% + 200px + 15px);  /* Adjusted position */
+    flex-direction: row;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 
 .plate {
-    color: white;
-    padding: 4px;
-    border-radius: 4px;
-    text-align: center;
-    min-width: 45px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin: 2px 0;
-    position: relative;
-}
-
-.sets-display {
-    padding: 8px;
-    text-align: center;
-    font-size: 0.9rem;
-    white-space: pre-line;
-    max-height: 80px;
-    overflow-y: auto;
-    background-color: #111;
-}
-
-.controls {
-    padding: 10px;
-    background-color: #222;
-}
-
-select {
-    width: 100%;
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 5px;
-    border: 1px solid #444;
-    background-color: #333;
-    color: white;
-    font-size: 0.9rem;
-}
-
-.button-row {
-    display: flex;
-    gap: 8px;
-    margin: 5px 0;
-}
-
-button {
-    color: white;
-    border: none;
-    padding: 10px;
-    text-align: center;
-    font-size: 0.9rem;
-    border-radius: 5px;
-    flex: 1;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.timer {
-    text-align: center;
-    font-size: 1rem;
-    padding: 8px;
-    background-color: #333;
-    color: white;
-    border-radius: 5px;
-    margin: 5px 0;
-}
-
-.plate-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-top: 8px;
-}
-
-/* Color coding */
-button[data-weight="5"], .plate[data-weight="5"] { 
-    background-color: #FF9800;
-    border: 1px solid #e68a00;
-}
-button[data-weight="10"], .plate[data-weight="10"] { 
-    background-color: #2196F3;
-    border: 1px solid #1a81d6;
-}
-button[data-weight="15"], .plate[data-weight="15"] { 
-    background-color: #9C27B0;
-    border: 1px solid #822099;
-}
-button[data-weight="20"], .plate[data-weight="20"] { 
-    background-color: #F44336;
-    border: 1px solid #d32f2f;
-}
-
-#set-button, #dumbbell-set-button { 
-    background-color: #4CAF50; 
-    border: 1px solid #3e8e41; 
-}
-#reset-weight-button, #dumbbell-reset-button { 
-    background-color: #f44336; 
-    border: 1px solid #d32f2f; 
-}
-#delete-last-button, #dumbbell-delete-button { 
-    background-color: #FF9800; 
-    border: 1px solid #e68a00; 
-}
-
-/* Screen management */
-.screen {
-    display: none;
-    flex: 1;
-    flex-direction: column;
-    width: 100%;
-}
-
-.screen.active {
-    display: flex;
-}
-
-/* Picker Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.7);
-    z-index: 100;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    background-color: #222;
-    padding: 20px;
-    border-radius: 15px;
-    width: 80%;
-    max-width: 300px;
-    text-align: center;
-}
-
-.modal h3 {
-    margin-bottom: 15px;
-}
-
-.picker-container {
-    height: 150px;
-    overflow: hidden;
-    position: relative;
-    margin: 20px 0;
-    perspective: 500px;
-}
-
-.picker {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform-style: preserve-3d;
-}
-
-.picker div {
-    padding: 10px 0;
-    font-size: 1.5rem;
-    width: 100%;
-    text-align: center;
-    transition: all 0.2s;
-}
-
-.picker div.selected {
-    font-weight: bold;
-    color: #4CAF50;
-    transform: scale(1.1);
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.modal-buttons button {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 1rem;
-}
-
-#cancel-reps, #cancel-dumbbell {
-    background-color: #f44336;
-}
-
-#confirm-reps, #confirm-dumbbell {
-    background-color: #4CAF50;
-}
-
-/* Plate Quick Add Styles */
-.plate-quickadd-container {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  z-index: 100;
-}
-
-.plate-quickadd-btn {
   width: 40px;
   height: 40px;
-  background-color: #4CAF50;
+  background-color: #d33;
   border-radius: 50%;
+  border: 3px solid #a22;
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  font-size: 20px;
   font-weight: bold;
-  cursor: pointer;
+  cursor: grab;
   user-select: none;
-  z-index: 10;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
 }
 
-.plate-quickadd-btn:active {
-  transform: scale(0.95);
-}
-
-.plate-quickadd-slider {
-  position: absolute;
-  right: 20px;
-  display: none;
-  background: white;
-  border-radius: 20px;
-  padding: 0 20px 0 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 9;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.plate-quickadd-slider.active {
-  display: flex;
-}
-
-.plate-option {
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.plate-option:hover {
-  background-color: #f0f0f0;
-}
-
-.plate-option:active {
-  background-color: #e0e0e0;
-  transform: scale(0.95);
-}
-
-/* Plate Quick Add Styles */
-.plate-quickadd-container {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 100%;
-  display: flex;
-  align-items: center;
+.plate:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.5);
   z-index: 100;
+  position: relative;
 }
 
-.plate-quickadd-btn {
-  width: 40px;
-  height: 40px;
-  background-color: #4CAF50;
-  border-radius: 50%;
+/* Mülleimer Bereich */
+.trash-area {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 100px;
+  height: 100px;
+  background-color: #ff4444;
+  border-radius: 20px;
+  box-shadow: 0 0 10px #ff0000;
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  font-size: 20px;
   font-weight: bold;
-  cursor: pointer;
+  font-size: 16px;
   user-select: none;
-  z-index: 10;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: all 0.2s;
+  z-index: 1000;
+  transition: background-color 0.3s;
 }
 
-.plate-quickadd-btn:active {
-  transform: scale(0.95);
-}
-
-.plate-quickadd-slider {
-  position: absolute;
-  right: 20px;
-  display: none;
-  background: white;
-  border-radius: 20px;
-  padding: 0 20px 0 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 9;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.plate-quickadd-slider.active {
-  display: flex;
-}
-
-.plate-option {
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.plate-option:hover {
-  background-color: #f0f0f0;
-}
-
-.plate-option:active {
-  background-color: #e0e0e0;
-  transform: scale(0.95);
+.trash-area.dragover {
+  background-color: #cc0000;
+  box-shadow: 0 0 20px #ff0000;
 }
