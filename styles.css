@@ -124,9 +124,7 @@ header {
 
 .weight-options {
   position: absolute;
-  top: 0;
-  left: 100%;
-  transform: translateY(-50%);
+  left: 0;
   background-color: white;
   border-radius: 10px;
   padding: 10px;
